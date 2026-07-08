@@ -1,12 +1,15 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import Animated, { useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -17,6 +20,7 @@ const MAX_WIDTH = 430;
 const CONTAINER_WIDTH = Math.min(SCREEN_WIDTH, MAX_WIDTH);
 const IMAGE_SECTION_HEIGHT = SCREEN_HEIGHT * 0.58;
 const BOTTOM_MIN_HEIGHT = SCREEN_HEIGHT * 0.44;
+const AUTO_PLAY_MS = 3500;
 
 interface OnboardingSlide {
   id: string;
@@ -67,9 +71,85 @@ function Slide({ item }: { item: OnboardingSlide }) {
   );
 }
 
+function Dot({
+  index,
+  activeIndex,
+  onPress,
+}: {
+  index: number;
+  activeIndex: number;
+  onPress: (index: number) => void;
+}) {
+  const isActive = index === activeIndex;
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    width: withSpring(isActive ? 24 : 8, {
+      stiffness: 200,
+      damping: 15,
+    }),
+  }));
+
+  return (
+    <Pressable onPress={() => onPress(index)} hitSlop={8}>
+      <Animated.View
+        style={[
+          styles.dot,
+          animatedStyle,
+          { backgroundColor: isActive ? "#FF6B1A" : "#D8D8D8" },
+        ]}
+      />
+    </Pressable>
+  );
+}
+
 export default function OnboardingScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList<OnboardingSlide>>(null);
+  const activeIndexRef = useRef(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+
+  const goToSlide = useCallback((index: number) => {
+    const clampedIndex = Math.max(
+      0,
+      Math.min(index, ONBOARDING_SLIDES.length - 1)
+    );
+    flatListRef.current?.scrollToIndex({
+      index: clampedIndex,
+      animated: true,
+    });
+    activeIndexRef.current = clampedIndex;
+    setActiveIndex(clampedIndex);
+  }, []);
+
+  const goToNextSlide = useCallback(() => {
+    const nextIndex =
+      (activeIndexRef.current + 1) % ONBOARDING_SLIDES.length;
+    goToSlide(nextIndex);
+  }, [goToSlide]);
+
+  const resetAutoPlay = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(goToNextSlide, AUTO_PLAY_MS);
+  }, [goToNextSlide]);
+
+  useEffect(() => {
+    intervalRef.current = setInterval(goToNextSlide, AUTO_PLAY_MS);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [goToNextSlide]);
+
+  const handleDotPress = useCallback(
+    (index: number) => {
+      goToSlide(index);
+      resetAutoPlay();
+    },
+    [goToSlide, resetAutoPlay]
+  );
+
+  const handleScrollBeginDrag = useCallback(() => {
+    resetAutoPlay();
+  }, [resetAutoPlay]);
 
   const onViewableItemsChanged = useCallback(
     ({
@@ -78,7 +158,12 @@ export default function OnboardingScreen() {
       viewableItems: Array<{ index: number | null }>;
     }) => {
       const index = viewableItems[0]?.index;
-      if (index !== null && index !== undefined) {
+      if (
+        index !== null &&
+        index !== undefined &&
+        index !== activeIndexRef.current
+      ) {
+        activeIndexRef.current = index;
         setActiveIndex(index);
       }
     },
@@ -96,21 +181,36 @@ export default function OnboardingScreen() {
 
   const keyExtractor = useCallback((item: OnboardingSlide) => item.id, []);
 
-  const handleDotPress = useCallback((index: number) => {
-    flatListRef.current?.scrollToIndex({ index, animated: true });
-    setActiveIndex(index);
-  }, []);
+  const handleMomentumScrollEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const index = Math.round(
+        e.nativeEvent.contentOffset.x / CONTAINER_WIDTH
+      );
+      if (index !== activeIndexRef.current) {
+        activeIndexRef.current = index;
+        setActiveIndex(index);
+      }
+    },
+    []
+  );
 
   return (
     <View style={styles.root}>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
 
       <View style={styles.phoneContainer}>
         <Pressable
           style={styles.skipButton}
-          onPress={() => router.replace("/")}
+          onPress={() => router.replace("/home")}
         >
-          <Text style={styles.skipText}>Skip</Text>
+          <LinearGradient
+            colors={["rgba(255,255,255,0.3)", "rgba(255,255,255,0.05)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.skipGradient}
+          >
+            <Text style={styles.skipText}>Skip</Text>
+          </LinearGradient>
         </Pressable>
 
         <FlatList
@@ -124,13 +224,16 @@ export default function OnboardingScreen() {
           bounces={false}
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={viewabilityConfig}
+          onScrollBeginDrag={handleScrollBeginDrag}
+          onMomentumScrollEnd={handleMomentumScrollEnd}
           style={styles.carousel}
+          removeClippedSubviews={false}
         />
 
         <View style={styles.bottomSection}>
           <View style={styles.content}>
             <Text style={styles.title}>
-              Stop Overpaying for Anything
+              Stop Overpaying for{"\n"}Anything
             </Text>
             <Text style={styles.subtitle}>
               Scan any product. Expose the markup. Find it for less.
@@ -138,23 +241,18 @@ export default function OnboardingScreen() {
 
             <View style={styles.dotsContainer}>
               {ONBOARDING_SLIDES.map((slide, index) => (
-                <Pressable
+                <Dot
                   key={slide.id}
-                  onPress={() => handleDotPress(index)}
-                  style={[
-                    styles.dot,
-                    {
-                      backgroundColor:
-                        activeIndex === index ? "#FF6B1A" : "#D8D8D8",
-                    },
-                  ]}
+                  index={index}
+                  activeIndex={activeIndex}
+                  onPress={handleDotPress}
                 />
               ))}
             </View>
 
             <Pressable
               style={styles.ctaButton}
-              onPress={() => router.replace("/")}
+              onPress={() => router.replace("/home")}
             >
               <Text style={styles.ctaText}>Get Started</Text>
             </Pressable>
@@ -184,12 +282,22 @@ const styles = StyleSheet.create({
     top: 60,
     right: 24,
     zIndex: 30,
+    borderRadius: 20,
+    overflow: "hidden",
+    borderWidth: 0.5,
+    borderColor: "rgba(255,255,255,0.5)",
+  },
+  skipGradient: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
   skipText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#888888",
-    letterSpacing: 0,
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    letterSpacing: 0.8,
   },
   carousel: {
     height: IMAGE_SECTION_HEIGHT,
@@ -215,6 +323,11 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     paddingTop: 32,
     justifyContent: "flex-end",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 8,
   },
   content: {
     width: "100%",
@@ -248,7 +361,6 @@ const styles = StyleSheet.create({
     marginTop: 28,
   },
   dot: {
-    width: 8,
     height: 8,
     borderRadius: 4,
   },
