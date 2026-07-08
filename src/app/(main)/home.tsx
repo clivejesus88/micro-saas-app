@@ -1,4 +1,4 @@
-import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SymbolView } from "expo-symbols";
 import { router } from "expo-router";
@@ -44,7 +44,7 @@ export default function HomeScreen() {
 
             <Pressable
               style={styles.quickScanButton}
-              onPress={() => {}}
+              onPress={() => Alert.alert("Scanner", "Camera scanner coming soon")}
             >
               <SymbolView name="camera.viewfinder" size={18} tintColor="#1C2A0E" weight="semibold" />
               <Text style={styles.quickScanText}>Scan a Product</Text>
@@ -58,28 +58,40 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.actionGrid}>
-            <Pressable style={styles.actionCard}>
+            <Pressable
+              style={styles.actionCard}
+              onPress={() => Alert.alert("Scanner", "Camera scanner coming soon")}
+            >
               <View style={[styles.actionIconBox, { backgroundColor: "#F0F7EB" }]}>
                 <SymbolView name="camera.viewfinder" size={22} tintColor="#1C2A0E" weight="semibold" />
               </View>
               <Text style={styles.actionLabel}>Scan Price</Text>
             </Pressable>
 
-            <Pressable style={styles.actionCard}>
+            <Pressable
+              style={styles.actionCard}
+              onPress={() => router.push("/history")}
+            >
               <View style={[styles.actionIconBox, { backgroundColor: "#FFF4E8" }]}>
                 <SymbolView name="clock" size={22} tintColor="#FF6B1A" weight="semibold" />
               </View>
               <Text style={styles.actionLabel}>History</Text>
             </Pressable>
 
-            <Pressable style={styles.actionCard}>
+            <Pressable
+              style={styles.actionCard}
+              onPress={() => router.push("/vault")}
+            >
               <View style={[styles.actionIconBox, { backgroundColor: "#EEF2F9" }]}>
                 <SymbolView name="shield" size={22} tintColor="#3B6CB7" weight="semibold" />
               </View>
               <Text style={styles.actionLabel}>Savings Vault</Text>
             </Pressable>
 
-            <Pressable style={styles.actionCard}>
+            <Pressable
+              style={styles.actionCard}
+              onPress={() => router.push("/profile")}
+            >
               <View style={[styles.actionIconBox, { backgroundColor: "#F5F0FF" }]}>
                 <SymbolView name="person" size={22} tintColor="#7C4DFF" weight="semibold" />
               </View>

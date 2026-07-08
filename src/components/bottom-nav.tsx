@@ -1,3 +1,4 @@
+import { Alert } from "react-native";
 import { usePathname, router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SymbolView } from "expo-symbols";
@@ -27,7 +28,10 @@ export function BottomNav() {
     TABS.find((t) => pathname === t.route)?.key ?? "home";
 
   const handleNavigate = (key: NavItem) => {
-    if (key === "scan") return;
+    if (key === "scan") {
+      Alert.alert("Scanner", "Camera scanner coming soon");
+      return;
+    }
     const tab = TABS.find((t) => t.key === key);
     if (tab) router.push(tab.route);
   };
