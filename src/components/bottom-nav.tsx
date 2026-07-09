@@ -1,23 +1,23 @@
 import { Alert } from "react-native";
 import { usePathname, router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { SymbolView } from "expo-symbols";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { House, Clock, Shield, User, Scan } from "lucide-react-native";
 
 type NavItem = "home" | "history" | "scan" | "vault" | "profile";
 
 interface TabConfig {
   key: NavItem;
   label: string;
-  icon: string;
+  icon: React.ElementType;
   route: string;
 }
 
 const TABS: TabConfig[] = [
-  { key: "home", label: "Home", icon: "house", route: "/home" },
-  { key: "history", label: "History", icon: "clock", route: "/history" },
-  { key: "vault", label: "Vault", icon: "shield", route: "/vault" },
-  { key: "profile", label: "Profile", icon: "person", route: "/profile" },
+  { key: "home", label: "Home", icon: House, route: "/home" },
+  { key: "history", label: "History", icon: Clock, route: "/history" },
+  { key: "vault", label: "Vault", icon: Shield, route: "/vault" },
+  { key: "profile", label: "Profile", icon: User, route: "/profile" },
 ];
 
 export function BottomNav() {
@@ -50,12 +50,7 @@ export function BottomNav() {
 
         <View style={styles.fabWrapper}>
           <Pressable style={styles.fab} onPress={() => handleNavigate("scan")}>
-            <SymbolView
-              name="camera.viewfinder"
-              size={22}
-              tintColor="#FFFFFF"
-              weight="semibold"
-            />
+            <Scan size={22} color="#FFFFFF" strokeWidth={2.2} />
           </Pressable>
         </View>
 
@@ -81,13 +76,13 @@ function TabButton({
   isActive: boolean;
   onPress: () => void;
 }) {
+  const Icon = tab.icon;
   return (
     <Pressable style={styles.tabButton} onPress={onPress}>
-      <SymbolView
-        name={tab.icon}
+      <Icon
         size={22}
-        tintColor={isActive ? "#4A7A28" : "#C4C4C4"}
-        weight={isActive ? "semibold" : "regular"}
+        color={isActive ? "#4A7A28" : "#C4C4C4"}
+        strokeWidth={isActive ? 2.5 : 1.8}
       />
       <Text
         style={[
