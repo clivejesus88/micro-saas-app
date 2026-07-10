@@ -9,8 +9,8 @@ import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Camera, Image as ImageIcon } from "lucide-react-native";
-import { useResponsive } from "@/hooks/use-responsive";
 import { MAX_WIDTH } from "@/constants/layout";
+import { TypeScale } from "@/constants/typography";
 
 interface RecentScan {
   id: string;
@@ -46,7 +46,6 @@ const RECENT_SCANS: RecentScan[] = [
 export default function ScanScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { fontScale } = useResponsive();
 
   return (
     <View style={styles.root}>
@@ -58,9 +57,7 @@ export default function ScanScreen() {
         >
           <ArrowLeft size={22} color="#1A1A1A" strokeWidth={2} />
         </Pressable>
-        <Text style={[styles.headerTitle, { fontSize: fontScale(18) }]}>
-          Scan Item
-        </Text>
+        <Text style={styles.headerTitle}>Scan Item</Text>
         <View style={styles.backButton} />
       </View>
 
@@ -81,12 +78,7 @@ export default function ScanScreen() {
 
             <View style={styles.viewfinderContent}>
               <Camera size={48} color="#CCCCCC" strokeWidth={1.6} />
-              <Text
-                style={[
-                  styles.viewfinderPrimary,
-                  { fontSize: fontScale(14) },
-                ]}
-              >
+              <Text style={styles.viewfinderPrimary}>
                 Point at any product
               </Text>
               <Text style={styles.viewfinderSecondary}>
@@ -107,11 +99,7 @@ export default function ScanScreen() {
         </View>
 
         <View style={styles.recentSection}>
-          <Text
-            style={[styles.recentTitle, { fontSize: fontScale(15) }]}
-          >
-            Recent Scans
-          </Text>
+          <Text style={styles.recentTitle}>Recent Scans</Text>
 
           <ScrollView
             horizontal
@@ -159,11 +147,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   headerTitle: {
+    ...TypeScale.sectionLg,
     flex: 1,
     textAlign: "center",
-    fontWeight: "600",
     color: "#1A1A1A",
-    letterSpacing: -0.4,
   },
   scroll: {
     flex: 1,
@@ -231,15 +218,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   viewfinderPrimary: {
-    fontWeight: "400",
+    ...TypeScale.muted,
     color: "#AAAAAA",
-    lineHeight: 20,
   },
   viewfinderSecondary: {
-    fontSize: 13,
-    fontWeight: "400",
+    ...TypeScale.mutedSm,
     color: "#BBBBBB",
-    lineHeight: 20,
     textAlign: "center",
   },
   actions: {
@@ -258,10 +242,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   scanButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
+    ...TypeScale.bodyLg,
     color: "#FFFFFF",
-    letterSpacing: -0.16,
   },
   uploadButton: {
     flexDirection: "row",
@@ -271,7 +253,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   uploadButtonText: {
-    fontSize: 14,
+    ...TypeScale.bodyMd,
     fontWeight: "600",
     color: "#FF6B1A",
   },
@@ -282,10 +264,8 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   recentTitle: {
-    fontWeight: "600",
+    ...TypeScale.sectionMd,
     color: "#1A1A1A",
-    letterSpacing: -0.15,
-    lineHeight: 20,
   },
   recentScrollContent: {
     marginTop: 16,
@@ -318,9 +298,8 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   recentBadgeText: {
-    fontSize: 10,
+    ...TypeScale.captionXs,
     fontWeight: "600",
     color: "#FFFFFF",
-    lineHeight: 12,
   },
 });

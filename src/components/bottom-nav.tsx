@@ -9,6 +9,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useScrollContext } from "@/contexts/scroll-context";
 import { MAX_WIDTH } from "@/constants/layout";
+import { TypeScale } from "@/constants/typography";
 
 export type NavItem = "home" | "history" | "scan" | "vault" | "profile";
 
@@ -126,8 +127,6 @@ const styles = StyleSheet.create({
     height: NAV_HEIGHT,
   },
   tabLabel: {
-    fontSize: 10,
-    fontWeight: "500",
-    lineHeight: 12,
+    ...TypeScale.captionXs,
   },
 });

@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useResponsive } from "@/hooks/use-responsive";
 import { MAX_WIDTH, BOTTOM_NAV_HEIGHT, MARKUP_CARD_RATIO } from "@/constants/layout";
 import { useScrollContext } from "@/contexts/scroll-context";
+import { TypeScale } from "@/constants/typography";
 
 interface ProductItem {
   id: string;
@@ -99,7 +100,7 @@ const TRENDING_FINDS: ProductItem[] = [
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { screenWidth, fontScale } = useResponsive();
+  const { screenWidth } = useResponsive();
   const {
     onScrollBeginDrag,
     onScrollEndDrag,
@@ -107,7 +108,6 @@ export default function HomeScreen() {
     onMomentumScrollEnd,
   } = useScrollContext();
 
-  const maxContentWidth = Math.min(screenWidth, MAX_WIDTH);
   const markupCardWidth = Math.round(screenWidth * MARKUP_CARD_RATIO);
   const bottomSpacer = BOTTOM_NAV_HEIGHT + insets.bottom + 20;
 
@@ -130,12 +130,8 @@ export default function HomeScreen() {
       >
         <View style={styles.header}>
           <View>
-            <Text style={[styles.greeting, { fontSize: fontScale(13) }]}>
-              Good morning
-            </Text>
-            <Text style={[styles.userName, { fontSize: fontScale(26) }]}>
-              Alex Rivera
-            </Text>
+            <Text style={styles.greeting}>Good morning</Text>
+            <Text style={styles.userName}>Alex Rivera</Text>
           </View>
           <Image
             source="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=240&auto=format&fit=crop"
@@ -174,9 +170,7 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: fontScale(15) }]}>
-            Top Markups Today
-          </Text>
+          <Text style={styles.sectionTitle}>Top Markups Today</Text>
 
           <ScrollView
             horizontal
@@ -219,9 +213,7 @@ export default function HomeScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={[styles.sectionTitle, { fontSize: fontScale(15) }]}>
-              Trending Finds
-            </Text>
+            <Text style={styles.sectionTitle}>Trending Finds</Text>
             <Pressable>
               <Text style={styles.seeAll}>See all</Text>
             </Pressable>
@@ -238,19 +230,12 @@ export default function HomeScreen() {
                 <View style={styles.trendingBody}>
                   <View style={styles.trendingTopRow}>
                     <View style={styles.trendingInfo}>
-                      <Text
-                        style={[
-                          styles.trendingName,
-                          { fontSize: fontScale(16) },
-                        ]}
-                      >
-                        {item.name}
-                      </Text>
+                      <Text style={styles.trendingName}>{item.name}</Text>
                       <View style={styles.trendingPriceRow}>
                         <Text style={styles.trendingOriginal}>
                           ${item.originalPrice.toLocaleString()}
                         </Text>
-                        <Text style={[styles.trendingPrice, { fontSize: fontScale(17) }]}>
+                        <Text style={styles.trendingPrice}>
                           ${item.alternativePrice.toLocaleString()}
                         </Text>
                       </View>
@@ -288,16 +273,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   greeting: {
-    fontWeight: "400",
+    ...TypeScale.mutedSm,
     color: "#888888",
-    lineHeight: 20,
   },
   userName: {
+    ...TypeScale.headingMd,
     marginTop: 4,
-    fontWeight: "700",
     color: "#1A1A1A",
-    letterSpacing: -0.8,
-    lineHeight: 32,
   },
   avatar: {
     width: 48,
@@ -331,15 +313,11 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   datePillDay: {
-    fontSize: 11,
-    fontWeight: "400",
-    lineHeight: 16,
+    ...TypeScale.captionSm,
     color: "#888888",
   },
   datePillDate: {
-    fontSize: 13,
-    fontWeight: "600",
-    lineHeight: 16,
+    ...TypeScale.captionLg,
     color: "#888888",
   },
   datePillTextActive: {
@@ -354,16 +332,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   sectionTitle: {
-    fontWeight: "600",
+    ...TypeScale.sectionMd,
     color: "#1A1A1A",
-    letterSpacing: -0.15,
-    lineHeight: 20,
   },
   seeAll: {
-    fontSize: 13,
-    fontWeight: "600",
+    ...TypeScale.captionLg,
     color: "#FF6B1A",
-    lineHeight: 20,
   },
   markupScroll: {
     marginTop: 16,
@@ -394,11 +368,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   markupName: {
-    fontSize: 13,
+    ...TypeScale.captionLg,
     fontWeight: "700",
     color: "#1A1A1A",
-    lineHeight: 16,
-    letterSpacing: -0.15,
     minHeight: 32,
   },
   markupFooter: {
@@ -407,10 +379,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   markupPrice: {
-    fontSize: 12,
+    ...TypeScale.captionMd,
     fontWeight: "600",
     color: "#4A7A28",
-    lineHeight: 16,
   },
   markupBadge: {
     backgroundColor: "#FF6B1A",
@@ -419,10 +390,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   markupBadgeText: {
-    fontSize: 10,
+    ...TypeScale.captionXs,
     fontWeight: "700",
     color: "#FFFFFF",
-    lineHeight: 12,
   },
   trendingList: {
     marginTop: 16,
@@ -460,10 +430,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   trendingName: {
+    ...TypeScale.bodyLg,
     fontWeight: "600",
     color: "#1A1A1A",
     letterSpacing: -0.4,
-    lineHeight: 20,
   },
   trendingPriceRow: {
     flexDirection: "row",
@@ -471,16 +441,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   trendingOriginal: {
-    fontSize: 13,
-    fontWeight: "400",
+    ...TypeScale.mutedSm,
     color: "#888888",
     textDecorationLine: "line-through",
-    lineHeight: 20,
   },
   trendingPrice: {
+    ...TypeScale.bodyLg,
     fontWeight: "700",
     color: "#4A7A28",
-    lineHeight: 20,
   },
   trendingBadge: {
     backgroundColor: "#FF6B1A",
@@ -494,9 +462,8 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   trendingBadgeText: {
-    fontSize: 11,
+    ...TypeScale.captionSm,
     fontWeight: "700",
     color: "#FFFFFF",
-    lineHeight: 14,
   },
 });

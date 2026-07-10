@@ -17,6 +17,7 @@ import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useResponsive } from "@/hooks/use-responsive";
 import { MAX_WIDTH } from "@/constants/layout";
+import { TypeScale } from "@/constants/typography";
 
 const AUTO_PLAY_MS = 3500;
 
@@ -284,10 +285,15 @@ export default function OnboardingScreen() {
           ]}
         >
           <View style={styles.content}>
-            <Text style={[styles.title, { fontSize: fontScale(32) }]}>
+            <Text
+              style={[
+                styles.title,
+                { fontSize: fontScale(TypeScale.headingLg.fontSize) },
+              ]}
+            >
               Stop Overpaying for{"\n"}Anything
             </Text>
-            <Text style={[styles.subtitle, { fontSize: fontScale(15) }]}>
+            <Text style={styles.subtitle}>
               Scan any product. Expose the markup. Find it for less.
             </Text>
 
@@ -342,8 +348,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   skipText: {
-    fontSize: 13,
-    fontWeight: "600",
+    ...TypeScale.captionLg,
     color: "#FFFFFF",
     letterSpacing: 0.8,
   },
@@ -385,18 +390,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    fontWeight: "700",
-    lineHeight: 34.5,
-    letterSpacing: -1.44,
+    ...TypeScale.headingLg,
     textAlign: "center",
     color: "#1A1A1A",
   },
   subtitle: {
+    ...TypeScale.muted,
     marginTop: 16,
     maxWidth: 310,
-    fontWeight: "400",
-    lineHeight: 23.25,
-    letterSpacing: -0.15,
     textAlign: "center",
     color: "#888888",
   },
@@ -422,9 +423,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   ctaText: {
-    fontSize: 16,
-    fontWeight: "600",
-    letterSpacing: -0.16,
+    ...TypeScale.bodyLg,
     color: "#FFFFFF",
   },
 });
