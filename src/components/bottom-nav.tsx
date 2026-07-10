@@ -3,6 +3,7 @@ import { usePathname, router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { House, Clock, Shield, User, Scan } from "lucide-react-native";
+import { MAX_WIDTH, FAB_SIZE } from "@/constants/layout";
 
 type NavItem = "home" | "history" | "scan" | "vault" | "profile";
 
@@ -33,7 +34,7 @@ export function BottomNav() {
       return;
     }
     const tab = TABS.find((t) => t.key === key);
-    if (tab) router.push(tab.route);
+    if (tab) router.push(tab.route as "/home");
   };
 
   return (
@@ -112,7 +113,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     height: 72,
     width: "100%",
-    maxWidth: 430,
+    maxWidth: MAX_WIDTH,
     paddingHorizontal: 4,
   },
   tabButton: {
@@ -135,10 +136,10 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: "absolute",
-    top: -27,
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    top: -(FAB_SIZE / 2),
+    width: FAB_SIZE,
+    height: FAB_SIZE,
+    borderRadius: FAB_SIZE / 2,
     backgroundColor: "#1C2A0E",
     alignItems: "center",
     justifyContent: "center",

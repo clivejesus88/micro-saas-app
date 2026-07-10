@@ -1,12 +1,14 @@
-import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { SymbolView } from "expo-symbols";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const MAX_WIDTH = 430;
-const CONTAINER_WIDTH = Math.min(SCREEN_WIDTH, MAX_WIDTH);
+import { useResponsive } from "@/hooks/use-responsive";
+import { MAX_WIDTH, BOTTOM_NAV_HEIGHT, MARKUP_CARD_RATIO } from "@/constants/layout";
 
 interface ProductItem {
   id: string;
@@ -96,91 +98,89 @@ const TRENDING_FINDS: ProductItem[] = [
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const { screenWidth, fontScale } = useResponsive();
+
+  const maxContentWidth = Math.min(screenWidth, MAX_WIDTH);
+  const markupCardWidth = Math.round(screenWidth * MARKUP_CARD_RATIO);
+  const bottomSpacer = BOTTOM_NAV_HEIGHT + insets.bottom + 20;
 
   return (
     <View style={styles.root}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: insets.top + 24,
+            paddingHorizontal: Math.max(20, screenWidth * 0.05),
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
-        <LinearGradient
-          colors={["#1C2A0E", "#2D4A1E"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={[styles.hero, { paddingTop: insets.top + 20 }]}
-        >
-          <View style={styles.heroRow}>
-            <View style={styles.heroTextCol}>
-              <View style={styles.greetingRow}>
-                <SymbolView
-                  name="sparkles"
-                  size={14}
-                  tintColor="#A8D68A"
-                  weight="semibold"
-                />
-                <Text style={styles.greeting}>Good morning</Text>
-              </View>
-              <Text style={styles.heroName}>Alex Rivera</Text>
-            </View>
-            <Image
-              source="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=240&auto=format&fit=crop"
-              style={styles.avatar}
-              contentFit="cover"
-            />
+        <View style={styles.header}>
+          <View>
+            <Text style={[styles.greeting, { fontSize: fontScale(13) }]}>
+              Good morning
+            </Text>
+            <Text style={[styles.userName, { fontSize: fontScale(26) }]}>
+              Alex Rivera
+            </Text>
           </View>
+          <Image
+            source="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=240&auto=format&fit=crop"
+            style={styles.avatar}
+            contentFit="cover"
+          />
+        </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.dateStripScroll}
-            contentContainerStyle={styles.dateStripContent}
-          >
-            {DATE_STRIP.map((day) => (
-              <Pressable
-                key={day.id}
+        <View style={styles.dateStrip}>
+          {DATE_STRIP.map((day) => (
+            <Pressable
+              key={day.id}
+              style={[
+                styles.datePill,
+                day.isToday && styles.datePillActive,
+              ]}
+            >
+              <Text
                 style={[
-                  styles.datePill,
-                  day.isToday && styles.datePillActive,
+                  styles.datePillDay,
+                  day.isToday && styles.datePillTextActive,
                 ]}
               >
-                <Text
-                  style={[
-                    styles.datePillDay,
-                    day.isToday && styles.datePillTextActive,
-                  ]}
-                >
-                  {day.day}
-                </Text>
-                <Text
-                  style={[
-                    styles.datePillDate,
-                    day.isToday && styles.datePillTextActive,
-                  ]}
-                >
-                  {day.date}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </LinearGradient>
-
-        <View style={styles.bodySection}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Top Markups Today</Text>
-            <Pressable>
-              <Text style={styles.seeAll}>See all</Text>
+                {day.day}
+              </Text>
+              <Text
+                style={[
+                  styles.datePillDate,
+                  day.isToday && styles.datePillTextActive,
+                ]}
+              >
+                {day.date}
+              </Text>
             </Pressable>
-          </View>
+          ))}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: fontScale(15) }]}>
+            Top Markups Today
+          </Text>
 
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.markupScroll}
-            contentContainerStyle={styles.markupScrollContent}
+            contentContainerStyle={[
+              styles.markupScrollContent,
+              { paddingHorizontal: Math.max(20, screenWidth * 0.05) },
+            ]}
           >
             {TOP_MARKUPS.map((item) => (
-              <Pressable key={item.id} style={styles.markupCard}>
+              <Pressable
+                key={item.id}
+                style={[styles.markupCard, { width: markupCardWidth }]}
+              >
                 <Image
                   source={item.imageUrl}
                   style={styles.markupImage}
@@ -204,9 +204,13 @@ export default function HomeScreen() {
               </Pressable>
             ))}
           </ScrollView>
+        </View>
 
+        <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Trending Finds</Text>
+            <Text style={[styles.sectionTitle, { fontSize: fontScale(15) }]}>
+              Trending Finds
+            </Text>
             <Pressable>
               <Text style={styles.seeAll}>See all</Text>
             </Pressable>
@@ -223,12 +227,19 @@ export default function HomeScreen() {
                 <View style={styles.trendingBody}>
                   <View style={styles.trendingTopRow}>
                     <View style={styles.trendingInfo}>
-                      <Text style={styles.trendingName}>{item.name}</Text>
+                      <Text
+                        style={[
+                          styles.trendingName,
+                          { fontSize: fontScale(16) },
+                        ]}
+                      >
+                        {item.name}
+                      </Text>
                       <View style={styles.trendingPriceRow}>
                         <Text style={styles.trendingOriginal}>
                           ${item.originalPrice.toLocaleString()}
                         </Text>
-                        <Text style={styles.trendingPrice}>
+                        <Text style={[styles.trendingPrice, { fontSize: fontScale(17) }]}>
                           ${item.alternativePrice.toLocaleString()}
                         </Text>
                       </View>
@@ -245,7 +256,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <View style={{ height: 140 }} />
+        <View style={{ height: bottomSpacer }} />
       </ScrollView>
     </View>
   );
@@ -255,148 +266,121 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-    alignItems: "center",
   },
   scroll: {
     flex: 1,
-    width: "100%",
-    maxWidth: MAX_WIDTH,
   },
-  scrollContent: {
-    alignItems: "center",
-  },
-  hero: {
-    width: "100%",
-    paddingHorizontal: 24,
-    paddingBottom: 28,
-  },
-  heroRow: {
+  scrollContent: {},
+  header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  heroTextCol: {
-    flexDirection: "column",
-  },
-  greetingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
   greeting: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#A8D68A",
-    letterSpacing: 0.3,
+    fontWeight: "400",
+    color: "#888888",
+    lineHeight: 20,
   },
-  heroName: {
+  userName: {
     marginTop: 4,
-    fontSize: 28,
     fontWeight: "700",
-    color: "#FFFFFF",
-    letterSpacing: -0.6,
+    color: "#1A1A1A",
+    letterSpacing: -0.8,
+    lineHeight: 32,
   },
   avatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    borderWidth: 3,
-    borderColor: "rgba(255,255,255,0.25)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
+    shadowColor: "#1A1A1A",
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.12,
+    shadowRadius: 34,
     elevation: 8,
   },
-  dateStripScroll: {
-    marginTop: 24,
-    marginHorizontal: -24,
-  },
-  dateStripContent: {
-    paddingHorizontal: 24,
-    gap: 8,
+  dateStrip: {
+    flexDirection: "row",
+    marginTop: 36,
+    gap: 6,
   },
   datePill: {
-    minWidth: 44,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.1)",
+    flex: 1,
     alignItems: "center",
-    gap: 2,
+    paddingVertical: 12,
+    borderRadius: 28,
+    backgroundColor: "#FFFFFF",
+    gap: 4,
   },
   datePillActive: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#2D4A1E",
     shadowColor: "#2D4A1E",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.22,
+    shadowRadius: 28,
     elevation: 6,
   },
   datePillDay: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: "rgba(255,255,255,0.6)",
-    lineHeight: 14,
+    fontSize: 11,
+    fontWeight: "400",
+    lineHeight: 16,
+    color: "#888888",
   },
   datePillDate: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "rgba(255,255,255,0.9)",
-    lineHeight: 18,
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 16,
+    color: "#888888",
   },
   datePillTextActive: {
-    color: "#1C2A0E",
+    color: "#FFFFFF",
   },
-  bodySection: {
-    width: CONTAINER_WIDTH - 32,
-    marginTop: 28,
+  section: {
+    marginTop: 40,
   },
   sectionHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "600",
     color: "#1A1A1A",
-    letterSpacing: -0.4,
+    letterSpacing: -0.15,
+    lineHeight: 20,
   },
   seeAll: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
     color: "#FF6B1A",
+    lineHeight: 20,
   },
   markupScroll: {
-    marginHorizontal: -16,
+    marginTop: 16,
+    marginHorizontal: -20,
   },
   markupScrollContent: {
-    paddingHorizontal: 16,
     gap: 12,
-    paddingBottom: 8,
+    paddingBottom: 24,
   },
   markupCard: {
-    width: 160,
     backgroundColor: "#FFFFFF",
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 10,
     shadowColor: "#1A1A1A",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.09,
+    shadowRadius: 45,
     elevation: 4,
   },
   markupImage: {
     aspectRatio: 1.08,
     width: "100%",
-    borderRadius: 14,
+    borderRadius: 18,
     backgroundColor: "#F5F5F5",
   },
   markupBody: {
     marginTop: 12,
-    gap: 10,
+    gap: 8,
   },
   markupName: {
     fontSize: 13,
@@ -410,12 +394,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 8,
   },
   markupPrice: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: "600",
     color: "#4A7A28",
+    lineHeight: 16,
   },
   markupBadge: {
     backgroundColor: "#FF6B1A",
@@ -425,48 +409,50 @@ const styles = StyleSheet.create({
   },
   markupBadgeText: {
     fontSize: 10,
-    fontWeight: "800",
+    fontWeight: "700",
     color: "#FFFFFF",
     lineHeight: 12,
   },
   trendingList: {
-    gap: 16,
+    marginTop: 16,
+    gap: 20,
   },
   trendingCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 24,
-    overflow: "hidden",
+    borderRadius: 28,
+    padding: 12,
     shadowColor: "#1A1A1A",
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 24 },
     shadowOpacity: 0.1,
-    shadowRadius: 32,
+    shadowRadius: 70,
     elevation: 6,
   },
   trendingImage: {
     aspectRatio: 4 / 3,
     width: "100%",
+    borderRadius: 24,
     backgroundColor: "#F5F5F5",
   },
   trendingBody: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 6,
     paddingTop: 16,
-    paddingBottom: 20,
+    paddingBottom: 8,
   },
   trendingTopRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    gap: 12,
+    gap: 16,
   },
   trendingInfo: {
     flex: 1,
     gap: 8,
   },
   trendingName: {
-    fontSize: 17,
     fontWeight: "600",
     color: "#1A1A1A",
-    letterSpacing: -0.3,
+    letterSpacing: -0.4,
+    lineHeight: 20,
   },
   trendingPriceRow: {
     flexDirection: "row",
@@ -474,16 +460,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   trendingOriginal: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "400",
     color: "#888888",
     textDecorationLine: "line-through",
+    lineHeight: 20,
   },
   trendingPrice: {
-    fontSize: 18,
     fontWeight: "700",
     color: "#4A7A28",
-    letterSpacing: -0.2,
+    lineHeight: 20,
   },
   trendingBadge: {
     backgroundColor: "#FF6B1A",
@@ -491,14 +477,14 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 16,
     shadowColor: "#FF6B1A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.22,
+    shadowRadius: 22,
     elevation: 4,
   },
   trendingBadgeText: {
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: 11,
+    fontWeight: "700",
     color: "#FFFFFF",
     lineHeight: 14,
   },

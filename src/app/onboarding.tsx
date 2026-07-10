@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Dimensions,
   FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -8,18 +7,17 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from "react-native";
 import Animated, { useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useResponsive } from "@/hooks/use-responsive";
+import { MAX_WIDTH } from "@/constants/layout";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const MAX_WIDTH = 430;
-const CONTAINER_WIDTH = Math.min(SCREEN_WIDTH, MAX_WIDTH);
-const IMAGE_SECTION_HEIGHT = SCREEN_HEIGHT * 0.58;
-const BOTTOM_MIN_HEIGHT = SCREEN_HEIGHT * 0.44;
 const AUTO_PLAY_MS = 3500;
 
 interface OnboardingSlide {
@@ -49,9 +47,17 @@ const ONBOARDING_SLIDES: OnboardingSlide[] = [
   },
 ];
 
-function Slide({ item }: { item: OnboardingSlide }) {
+function Slide({
+  item,
+  containerWidth,
+  imageHeight,
+}: {
+  item: OnboardingSlide;
+  containerWidth: number;
+  imageHeight: number;
+}) {
   return (
-    <View style={{ width: CONTAINER_WIDTH, height: IMAGE_SECTION_HEIGHT }}>
+    <View style={{ width: containerWidth, height: imageHeight }}>
       <Image
         source={{ uri: item.image }}
         style={styles.slideImage}
@@ -106,20 +112,40 @@ export default function OnboardingScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList<OnboardingSlide>>(null);
   const activeIndexRef = useRef(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
-  const goToSlide = useCallback((index: number) => {
-    const clampedIndex = Math.max(
-      0,
-      Math.min(index, ONBOARDING_SLIDES.length - 1)
-    );
-    flatListRef.current?.scrollToIndex({
-      index: clampedIndex,
-      animated: true,
-    });
-    activeIndexRef.current = clampedIndex;
-    setActiveIndex(clampedIndex);
-  }, []);
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const { fontScale } = useResponsive();
+
+  const containerWidth = useMemo(
+    () => Math.min(screenWidth, MAX_WIDTH),
+    [screenWidth]
+  );
+  const imageSectionHeight = useMemo(
+    () => screenHeight * 0.58,
+    [screenHeight]
+  );
+  const bottomMinHeight = useMemo(
+    () => screenHeight * 0.44,
+    [screenHeight]
+  );
+
+  const goToSlide = useCallback(
+    (index: number) => {
+      const clampedIndex = Math.max(
+        0,
+        Math.min(index, ONBOARDING_SLIDES.length - 1)
+      );
+      flatListRef.current?.scrollToIndex({
+        index: clampedIndex,
+        animated: true,
+      });
+      activeIndexRef.current = clampedIndex;
+      setActiveIndex(clampedIndex);
+    },
+    []
+  );
 
   const goToNextSlide = useCallback(() => {
     const nextIndex =
@@ -175,32 +201,52 @@ export default function OnboardingScreen() {
   }).current;
 
   const renderSlide = useCallback(
-    ({ item }: { item: OnboardingSlide }) => <Slide item={item} />,
-    []
+    ({ item }: { item: OnboardingSlide }) => (
+      <Slide
+        item={item}
+        containerWidth={containerWidth}
+        imageHeight={imageSectionHeight}
+      />
+    ),
+    [containerWidth, imageSectionHeight]
   );
 
   const keyExtractor = useCallback((item: OnboardingSlide) => item.id, []);
 
+  const getItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: containerWidth,
+      offset: containerWidth * index,
+      index,
+    }),
+    [containerWidth]
+  );
+
   const handleMomentumScrollEnd = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       const index = Math.round(
-        e.nativeEvent.contentOffset.x / CONTAINER_WIDTH
+        e.nativeEvent.contentOffset.x / containerWidth
       );
       if (index !== activeIndexRef.current) {
         activeIndexRef.current = index;
         setActiveIndex(index);
       }
     },
-    []
+    [containerWidth]
   );
 
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
 
-      <View style={styles.phoneContainer}>
+      <View
+        style={[
+          styles.phoneContainer,
+          { width: containerWidth, height: screenHeight },
+        ]}
+      >
         <Pressable
-          style={styles.skipButton}
+          style={[styles.skipButton, { top: insets.top + 12, right: 24 }]}
           onPress={() => router.replace("/home")}
         >
           <LinearGradient
@@ -226,16 +272,22 @@ export default function OnboardingScreen() {
           viewabilityConfig={viewabilityConfig}
           onScrollBeginDrag={handleScrollBeginDrag}
           onMomentumScrollEnd={handleMomentumScrollEnd}
-          style={styles.carousel}
+          getItemLayout={getItemLayout}
+          style={[styles.carousel, { height: imageSectionHeight }]}
           removeClippedSubviews={false}
         />
 
-        <View style={styles.bottomSection}>
+        <View
+          style={[
+            styles.bottomSection,
+            { minHeight: bottomMinHeight },
+          ]}
+        >
           <View style={styles.content}>
-            <Text style={styles.title}>
+            <Text style={[styles.title, { fontSize: fontScale(32) }]}>
               Stop Overpaying for{"\n"}Anything
             </Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.subtitle, { fontSize: fontScale(15) }]}>
               Scan any product. Expose the markup. Find it for less.
             </Text>
 
@@ -271,16 +323,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   phoneContainer: {
-    width: CONTAINER_WIDTH,
-    height: SCREEN_HEIGHT,
     backgroundColor: "#FFFFFF",
     overflow: "hidden",
     position: "relative",
   },
   skipButton: {
     position: "absolute",
-    top: 60,
-    right: 24,
     zIndex: 30,
     borderRadius: 20,
     overflow: "hidden",
@@ -299,23 +347,24 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     letterSpacing: 0.8,
   },
-  carousel: {
-    height: IMAGE_SECTION_HEIGHT,
-  },
+  carousel: {},
   slideImage: {
     width: "100%",
     height: "100%",
     transform: [{ scale: 1.02 }],
   },
   gradientOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   bottomSection: {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    minHeight: BOTTOM_MIN_HEIGHT,
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
@@ -336,7 +385,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    fontSize: 32,
     fontWeight: "700",
     lineHeight: 34.5,
     letterSpacing: -1.44,
@@ -346,7 +394,6 @@ const styles = StyleSheet.create({
   subtitle: {
     marginTop: 16,
     maxWidth: 310,
-    fontSize: 15,
     fontWeight: "400",
     lineHeight: 23.25,
     letterSpacing: -0.15,
