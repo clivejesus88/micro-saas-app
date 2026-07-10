@@ -9,6 +9,7 @@ import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useResponsive } from "@/hooks/use-responsive";
 import { MAX_WIDTH, BOTTOM_NAV_HEIGHT, MARKUP_CARD_RATIO } from "@/constants/layout";
+import { useScrollContext } from "@/contexts/scroll-context";
 
 interface ProductItem {
   id: string;
@@ -99,6 +100,12 @@ const TRENDING_FINDS: ProductItem[] = [
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { screenWidth, fontScale } = useResponsive();
+  const {
+    onScrollBeginDrag,
+    onScrollEndDrag,
+    onMomentumScrollBegin,
+    onMomentumScrollEnd,
+  } = useScrollContext();
 
   const maxContentWidth = Math.min(screenWidth, MAX_WIDTH);
   const markupCardWidth = Math.round(screenWidth * MARKUP_CARD_RATIO);
@@ -116,6 +123,10 @@ export default function HomeScreen() {
           },
         ]}
         showsVerticalScrollIndicator={false}
+        onScrollBeginDrag={onScrollBeginDrag}
+        onScrollEndDrag={onScrollEndDrag}
+        onMomentumScrollBegin={onMomentumScrollBegin}
+        onMomentumScrollEnd={onMomentumScrollEnd}
       >
         <View style={styles.header}>
           <View>

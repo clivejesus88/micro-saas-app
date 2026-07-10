@@ -1,15 +1,18 @@
 import { Slot } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { BottomNav } from "@/components/bottom-nav";
+import { ScrollProvider } from "@/contexts/scroll-context";
 
 export default function MainLayout() {
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Slot />
+    <ScrollProvider>
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <Slot />
+        </View>
+        <BottomNav />
       </View>
-      <BottomNav />
-    </View>
+    </ScrollProvider>
   );
 }
 
