@@ -1,4 +1,4 @@
-import { Alert, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { usePathname, router } from "expo-router";
 import { Pressable, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,7 +22,7 @@ interface TabConfig {
 const TABS: TabConfig[] = [
   { key: "home", label: "Home", icon: Home, route: "/home" },
   { key: "history", label: "History", icon: Clock3, route: "/history" },
-  { key: "scan", label: "Scan", icon: ScanLine, route: null },
+  { key: "scan", label: "Scan", icon: ScanLine, route: "/scan" },
   { key: "vault", label: "Vault", icon: Wallet, route: "/vault" },
   { key: "profile", label: "Profile", icon: UserRound, route: "/profile" },
 ];
@@ -50,10 +50,6 @@ export function BottomNav() {
   }));
 
   const handleNavigate = (key: NavItem) => {
-    if (key === "scan") {
-      Alert.alert("Scanner", "Camera scanner coming soon");
-      return;
-    }
     const tab = TABS.find((t) => t.key === key);
     if (tab?.route) router.push(tab.route as "/home");
   };
