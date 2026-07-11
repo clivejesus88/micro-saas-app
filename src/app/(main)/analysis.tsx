@@ -9,6 +9,7 @@ import {
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { BlurView } from "expo-blur";
 import {
   ArrowUpRight,
   ChevronLeft,
@@ -373,7 +374,7 @@ export default function AnalysisScreen() {
           { bottom: BOTTOM_NAV_HEIGHT + insets.bottom + 8 },
         ]}
       >
-        <View style={styles.ctaBar}>
+        <BlurView intensity={80} tint="light" style={styles.ctaBar}>
           <View style={styles.ctaRefresh}>
             <RefreshCw size={12} color="#AAAAAA" strokeWidth={2} />
             <Text style={styles.ctaRefreshText}>Prices updated 2 min ago</Text>
@@ -382,7 +383,7 @@ export default function AnalysisScreen() {
             <Copy size={15} color="#FFFFFF" strokeWidth={2.2} />
             <Text style={styles.ctaButtonText}>{copied ? "Copied!" : "Copy AI Search String"}</Text>
           </Pressable>
-        </View>
+        </BlurView>
       </View>
     </View>
   );
