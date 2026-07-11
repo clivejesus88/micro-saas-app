@@ -5,43 +5,11 @@ import {
   Text,
   View,
 } from "react-native";
-import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Camera, Image as ImageIcon } from "lucide-react-native";
 import { MAX_WIDTH } from "@/constants/layout";
 import { TypeScale } from "@/constants/typography";
-
-interface RecentScan {
-  id: string;
-  image: string;
-  name: string;
-  markup: string;
-}
-
-const RECENT_SCANS: RecentScan[] = [
-  {
-    id: "running-sneaker",
-    image:
-      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=400&auto=format&fit=crop",
-    name: "Running sneaker",
-    markup: "+34%",
-  },
-  {
-    id: "leather-handbag",
-    image:
-      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=400&auto=format&fit=crop",
-    name: "Leather handbag",
-    markup: "+21%",
-  },
-  {
-    id: "wool-jacket",
-    image:
-      "https://images.unsplash.com/photo-1544022613-e87ca75a784a?q=80&w=400&auto=format&fit=crop",
-    name: "Wool jacket",
-    markup: "+48%",
-  },
-];
 
 export default function ScanScreen() {
   const insets = useSafeAreaInsets();
@@ -52,7 +20,10 @@ export default function ScanScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Pressable
           style={styles.backButton}
-          onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/home"); }}
+          onPress={() => {
+            if (router.canGoBack()) router.back();
+            else router.replace("/home");
+          }}
           hitSlop={8}
         >
           <ArrowLeft size={22} color="#1A1A1A" strokeWidth={2} />
@@ -89,10 +60,20 @@ export default function ScanScreen() {
         </View>
 
         <View style={styles.actions}>
-          <Pressable style={({ pressed }) => [styles.scanButton, pressed && { opacity: 0.88 }]} onPress={() => router.push("/analysis")}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.scanButton,
+              pressed && { opacity: 0.88 },
+            ]}
+          >
             <Text style={styles.scanButtonText}>Scan for Arbitrage</Text>
           </Pressable>
-          <Pressable style={({ pressed }) => [styles.uploadButton, pressed && { opacity: 0.6 }]} onPress={() => router.push("/analysis")}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.uploadButton,
+              pressed && { opacity: 0.6 },
+            ]}
+          >
             <ImageIcon size={16} color="#FF6B1A" strokeWidth={2} />
             <Text style={styles.uploadButtonText}>Upload from gallery</Text>
           </Pressable>
@@ -100,25 +81,12 @@ export default function ScanScreen() {
 
         <View style={styles.recentSection}>
           <Text style={styles.recentTitle}>Recent Scans</Text>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.recentScrollContent}
-          >
-            {RECENT_SCANS.map((scan) => (
-              <Pressable key={scan.id} style={({ pressed }) => [styles.recentCard, pressed && { opacity: 0.85 }]} onPress={() => router.push("/analysis")}>
-                <Image
-                  source={scan.image}
-                  style={styles.recentImage}
-                  contentFit="cover"
-                />
-                <View style={styles.recentBadge}>
-                  <Text style={styles.recentBadgeText}>{scan.markup}</Text>
-                </View>
-                </Pressable>
-            ))}
-          </ScrollView>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>No scans yet</Text>
+            <Text style={styles.emptyDesc}>
+              Your recent scans will appear here
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -267,36 +235,19 @@ const styles = StyleSheet.create({
     ...TypeScale.sectionMd,
     color: "#1A1A1A",
   },
-  recentScrollContent: {
-    marginTop: 16,
-    gap: 12,
-    paddingBottom: 8,
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 32,
+    gap: 8,
   },
-  recentCard: {
-    width: 116,
-    height: 116,
-    borderRadius: 14,
-    overflow: "hidden",
-    backgroundColor: "#F5F5F5",
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.04)",
-  },
-  recentImage: {
-    width: "100%",
-    height: "100%",
-  },
-  recentBadge: {
-    position: "absolute",
-    bottom: 6,
-    right: 6,
-    backgroundColor: "#FF6B1A",
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  recentBadgeText: {
-    ...TypeScale.captionXs,
+  emptyTitle: {
+    ...TypeScale.bodyLg,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: "#1A1A1A",
+  },
+  emptyDesc: {
+    ...TypeScale.mutedSm,
+    color: "#AAAAAA",
+    textAlign: "center",
   },
 });

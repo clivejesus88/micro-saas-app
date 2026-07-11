@@ -61,40 +61,42 @@ export function BottomNav() {
       pointerEvents="box-none"
       style={[styles.wrapper, animatedStyle]}
     >
-      <BlurView intensity={80} tint="light" style={styles.blur}>
+      <View style={styles.container}>
         <View
-          style={[styles.container, { paddingBottom: insets.bottom + 8 }]}
+          style={[styles.containerInner, { paddingBottom: insets.bottom + 8 }]}
         >
-          <View style={styles.navBar}>
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeItem === tab.key;
-              return (
-                <Pressable
-                  key={tab.key}
-                  style={styles.tabButton}
-                  onPress={() => handleNavigate(tab.key)}
-                  hitSlop={4}
-                >
-                  <Icon
-                    size={22}
-                    color={isActive ? "#4A7A28" : "#C4C4C4"}
-                    strokeWidth={2}
-                  />
-                  <Text
-                    style={[
-                      styles.tabLabel,
-                      { color: isActive ? "#4A7A28" : "#C4C4C4" },
-                    ]}
+          <BlurView intensity={80} tint="systemChromeMaterialLight" style={styles.blur}>
+            <View style={styles.navBar}>
+              {TABS.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeItem === tab.key;
+                return (
+                  <Pressable
+                    key={tab.key}
+                    style={styles.tabButton}
+                    onPress={() => handleNavigate(tab.key)}
+                    hitSlop={4}
                   >
-                    {tab.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+                    <Icon
+                      size={22}
+                      color={isActive ? "#4A7A28" : "#C4C4C4"}
+                      strokeWidth={2}
+                    />
+                    <Text
+                      style={[
+                        styles.tabLabel,
+                        { color: isActive ? "#4A7A28" : "#C4C4C4" },
+                      ]}
+                    >
+                      {tab.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </BlurView>
         </View>
-      </BlurView>
+      </View>
     </Animated.View>
   );
 }
@@ -108,15 +110,27 @@ const styles = StyleSheet.create({
     zIndex: 50,
     alignItems: "center",
   },
-  blur: {
-    width: "100%",
-    overflow: "hidden",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "rgba(0,0,0,0.08)",
-  },
   container: {
     width: "100%",
     maxWidth: MAX_WIDTH,
+    paddingHorizontal: 16,
+  },
+  containerInner: {
+    width: "100%",
+    backgroundColor: "rgba(255,255,255,0.55)",
+    borderRadius: 28,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.6)",
+  },
+  blur: {
+    borderRadius: 28,
+    overflow: "hidden",
   },
   navBar: {
     flexDirection: "row",
