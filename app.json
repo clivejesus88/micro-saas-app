@@ -8,7 +8,11 @@
     "scheme": "fringe",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Fringe needs camera access to scan products for price analysis.",
+        "NSPhotoLibraryUsageDescription": "Fringe needs photo access to analyze products from your gallery."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -25,6 +29,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-image-picker",
       [
         "expo-splash-screen",
         {

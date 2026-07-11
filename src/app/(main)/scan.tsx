@@ -1,19 +1,70 @@
+import { useState, useCallback } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ArrowLeft, Camera, Image as ImageIcon } from "lucide-react-native";
+import {
+  ArrowLeft,
+  Camera,
+  Check,
+  Image as ImageIcon,
+  X,
+  Sparkles,
+} from "lucide-react-native";
 import { MAX_WIDTH } from "@/constants/layout";
 import { TypeScale } from "@/constants/typography";
+
+type ScanState = "idle" | "preview" | "analyzing";
 
 export default function ScanScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
+  const [scanState, setScanState] = useState<ScanState>("idle");
+  const [imageUri, setImageUri] = useState<string | null>(null);
+
+  const pickImage = useCallback(async (useCamera: boolean) => {
+    try {
+      const launcher = useCamera
+        ? ImagePicker.launchCameraAsync
+        : ImagePicker.launchImageLibraryAsync;
+
+      const result = await launcher({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        quality: 0.85,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setImageUri(result.assets[0].uri);
+        setScanState("preview");
+      }
+    } catch {
+      setScanState("idle");
+    }
+  }, []);
+
+  const handleAnalyze = useCallback(() => {
+    setScanState("analyzing");
+    setTimeout(() => {
+      setScanState("idle");
+      setImageUri(null);
+      router.push("/analysis");
+    }, 2200);
+  }, [router]);
+
+  const handleClear = useCallback(() => {
+    setImageUri(null);
+    setScanState("idle");
+  }, []);
 
   return (
     <View style={styles.root}>
@@ -21,6 +72,10 @@ export default function ScanScreen() {
         <Pressable
           style={styles.backButton}
           onPress={() => {
+            if (scanState !== "idle") {
+              handleClear();
+              return;
+            }
             if (router.canGoBack()) router.back();
             else router.replace("/home");
           }}
@@ -42,52 +97,126 @@ export default function ScanScreen() {
       >
         <View style={styles.viewfinderWrapper}>
           <View style={styles.viewfinder}>
-            <View style={[styles.corner, styles.cornerTL]} />
-            <View style={[styles.corner, styles.cornerTR]} />
-            <View style={[styles.corner, styles.cornerBL]} />
-            <View style={[styles.corner, styles.cornerBR]} />
+            {scanState === "idle" && (
+              <>
+                <View style={[styles.corner, styles.cornerTL]} />
+                <View style={[styles.corner, styles.cornerTR]} />
+                <View style={[styles.corner, styles.cornerBL]} />
+                <View style={[styles.corner, styles.cornerBR]} />
+                <View style={styles.viewfinderContent}>
+                  <Camera size={48} color="#CCCCCC" strokeWidth={1.6} />
+                  <Text style={styles.viewfinderPrimary}>
+                    Point at any product
+                  </Text>
+                  <Text style={styles.viewfinderSecondary}>
+                    Sneakers, bags, electronics, home goods — anything.
+                  </Text>
+                </View>
+              </>
+            )}
 
-            <View style={styles.viewfinderContent}>
-              <Camera size={48} color="#CCCCCC" strokeWidth={1.6} />
-              <Text style={styles.viewfinderPrimary}>
-                Point at any product
-              </Text>
-              <Text style={styles.viewfinderSecondary}>
-                Sneakers, bags, electronics, home goods — anything.
+            {scanState === "preview" && imageUri && (
+              <>
+                <Image
+                  source={{ uri: imageUri }}
+                  style={styles.previewImage}
+                  contentFit="cover"
+                />
+                <Pressable
+                  style={styles.clearButton}
+                  onPress={handleClear}
+                  hitSlop={8}
+                >
+                  <View style={styles.clearButtonBg}>
+                    <X size={16} color="#FFFFFF" strokeWidth={2.5} />
+                  </View>
+                </Pressable>
+              </>
+            )}
+
+            {scanState === "analyzing" && (
+              <>
+                {imageUri && (
+                  <Image
+                    source={{ uri: imageUri }}
+                    style={[styles.previewImage, { opacity: 0.4 }]}
+                    contentFit="cover"
+                  />
+                )}
+                <View style={styles.analyzingOverlay}>
+                  <View style={styles.analyzingPill}>
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <Text style={styles.analyzingText}>Analyzing...</Text>
+                  </View>
+                  <Text style={styles.analyzingHint}>
+                    Scanning prices across 50+ retailers
+                  </Text>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+
+        {scanState === "idle" && (
+          <View style={styles.actions}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.scanButton,
+                pressed && { opacity: 0.88 },
+              ]}
+              onPress={() => pickImage(true)}
+            >
+              <Camera size={18} color="#FFFFFF" strokeWidth={2} />
+              <Text style={styles.scanButtonText}>Scan for Arbitrage</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.uploadButton,
+                pressed && { opacity: 0.6 },
+              ]}
+              onPress={() => pickImage(false)}
+            >
+              <ImageIcon size={16} color="#FF6B1A" strokeWidth={2} />
+              <Text style={styles.uploadButtonText}>Upload from gallery</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {scanState === "preview" && (
+          <View style={styles.actions}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.scanButton,
+                pressed && { opacity: 0.88 },
+              ]}
+              onPress={handleAnalyze}
+            >
+              <Sparkles size={18} color="#FFFFFF" strokeWidth={2} />
+              <Text style={styles.scanButtonText}>Analyze Product</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.uploadButton,
+                pressed && { opacity: 0.6 },
+              ]}
+              onPress={handleClear}
+            >
+              <Text style={styles.uploadButtonText}>Choose different photo</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {scanState === "idle" && (
+          <View style={styles.recentSection}>
+            <Text style={styles.recentTitle}>Recent Scans</Text>
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>No scans yet</Text>
+              <Text style={styles.emptyDesc}>
+                Your recent scans will appear here
               </Text>
             </View>
           </View>
-        </View>
-
-        <View style={styles.actions}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.scanButton,
-              pressed && { opacity: 0.88 },
-            ]}
-          >
-            <Text style={styles.scanButtonText}>Scan for Arbitrage</Text>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [
-              styles.uploadButton,
-              pressed && { opacity: 0.6 },
-            ]}
-          >
-            <ImageIcon size={16} color="#FF6B1A" strokeWidth={2} />
-            <Text style={styles.uploadButtonText}>Upload from gallery</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.recentSection}>
-          <Text style={styles.recentTitle}>Recent Scans</Text>
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No scans yet</Text>
-            <Text style={styles.emptyDesc}>
-              Your recent scans will appear here
-            </Text>
-          </View>
-        </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -194,6 +323,47 @@ const styles = StyleSheet.create({
     color: "#BBBBBB",
     textAlign: "center",
   },
+  previewImage: {
+    width: "100%",
+    height: "100%",
+  },
+  clearButton: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+  },
+  clearButtonBg: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  analyzingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  analyzingPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "rgba(28,42,14,0.85)",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 50,
+  },
+  analyzingText: {
+    ...TypeScale.bodyLg,
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  analyzingHint: {
+    ...TypeScale.mutedSm,
+    color: "rgba(255,255,255,0.7)",
+  },
   actions: {
     marginTop: 28,
     gap: 16,
@@ -202,11 +372,13 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   scanButton: {
+    flexDirection: "row",
     height: 56,
     borderRadius: 50,
     backgroundColor: "#1C2A0E",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
     paddingHorizontal: 24,
   },
   scanButtonText: {
