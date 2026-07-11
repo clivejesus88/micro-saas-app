@@ -2,6 +2,7 @@ import { StyleSheet, View } from "react-native";
 import { usePathname, router } from "expo-router";
 import { Pressable, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BlurView } from "expo-blur";
 import { Home, Clock3, ScanLine, Wallet, UserRound } from "lucide-react-native";
 import Animated, {
   useAnimatedStyle,
@@ -60,38 +61,40 @@ export function BottomNav() {
       pointerEvents="box-none"
       style={[styles.wrapper, animatedStyle]}
     >
-      <View
-        style={[styles.container, { paddingBottom: insets.bottom + 8 }]}
-      >
-        <View style={styles.navBar}>
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeItem === tab.key;
-            return (
-              <Pressable
-                key={tab.key}
-                style={styles.tabButton}
-                onPress={() => handleNavigate(tab.key)}
-                hitSlop={4}
-              >
-                <Icon
-                  size={22}
-                  color={isActive ? "#4A7A28" : "#C4C4C4"}
-                  strokeWidth={2}
-                />
-                <Text
-                  style={[
-                    styles.tabLabel,
-                    { color: isActive ? "#4A7A28" : "#C4C4C4" },
-                  ]}
+      <BlurView intensity={80} tint="light" style={styles.blur}>
+        <View
+          style={[styles.container, { paddingBottom: insets.bottom + 8 }]}
+        >
+          <View style={styles.navBar}>
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeItem === tab.key;
+              return (
+                <Pressable
+                  key={tab.key}
+                  style={styles.tabButton}
+                  onPress={() => handleNavigate(tab.key)}
+                  hitSlop={4}
                 >
-                  {tab.label}
-                </Text>
-              </Pressable>
-            );
-          })}
+                  <Icon
+                    size={22}
+                    color={isActive ? "#4A7A28" : "#C4C4C4"}
+                    strokeWidth={2}
+                  />
+                  <Text
+                    style={[
+                      styles.tabLabel,
+                      { color: isActive ? "#4A7A28" : "#C4C4C4" },
+                    ]}
+                  >
+                    {tab.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
-      </View>
+      </BlurView>
     </Animated.View>
   );
 }
@@ -104,9 +107,12 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 50,
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderTopWidth: 1,
-    borderTopColor: "#F0F0F0",
+  },
+  blur: {
+    width: "100%",
+    overflow: "hidden",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "rgba(0,0,0,0.08)",
   },
   container: {
     width: "100%",
