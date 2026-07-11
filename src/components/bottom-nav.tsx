@@ -65,7 +65,7 @@ export function BottomNav() {
         <View
           style={[styles.containerInner, { paddingBottom: insets.bottom + 8 }]}
         >
-          <BlurView intensity={80} tint="systemChromeMaterialLight" style={styles.blur}>
+          <BlurView intensity={100} tint="dark" style={styles.blur}>
             <View style={styles.navBar}>
               {TABS.map((tab) => {
                 const Icon = tab.icon;
@@ -73,19 +73,24 @@ export function BottomNav() {
                 return (
                   <Pressable
                     key={tab.key}
-                    style={styles.tabButton}
+                    style={[
+                      styles.tabButton,
+                      isActive && styles.tabButtonActive,
+                    ]}
                     onPress={() => handleNavigate(tab.key)}
                     hitSlop={4}
                   >
-                    <Icon
-                      size={22}
-                      color={isActive ? "#4A7A28" : "#C4C4C4"}
-                      strokeWidth={2}
-                    />
+                    <View style={[styles.iconWrap, isActive && styles.iconWrapActive]}>
+                      <Icon
+                        size={22}
+                        color={isActive ? "#FFFFFF" : "#8E8E93"}
+                        strokeWidth={isActive ? 2.2 : 1.8}
+                      />
+                    </View>
                     <Text
                       style={[
                         styles.tabLabel,
-                        { color: isActive ? "#4A7A28" : "#C4C4C4" },
+                        { color: isActive ? "#FFFFFF" : "#8E8E93" },
                       ]}
                     >
                       {tab.label}
@@ -117,16 +122,16 @@ const styles = StyleSheet.create({
   },
   containerInner: {
     width: "100%",
-    backgroundColor: "rgba(255,255,255,0.55)",
+    backgroundColor: "rgba(18,18,20,0.72)",
     borderRadius: 28,
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 16,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    elevation: 20,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.6)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   blur: {
     borderRadius: 28,
@@ -145,6 +150,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     height: NAV_HEIGHT,
+  },
+  tabButtonActive: {
+    gap: 6,
+  },
+  iconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconWrapActive: {
+    backgroundColor: "rgba(74,122,40,0.25)",
   },
   tabLabel: {
     ...TypeScale.captionXs,
