@@ -248,7 +248,7 @@ export default function OnboardingScreen() {
       >
         <Pressable
           style={[styles.skipButton, { top: insets.top + 12, right: 24 }]}
-          onPress={() => router.replace("/home")}
+          onPress={() => router.replace("/login")}
         >
           <LinearGradient
             colors={["rgba(255,255,255,0.3)", "rgba(255,255,255,0.05)"]}
@@ -310,7 +310,7 @@ export default function OnboardingScreen() {
 
             <Pressable
               style={styles.ctaButton}
-              onPress={() => router.replace("/home")}
+              onPress={() => router.replace("/signup")}
             >
               <Text style={styles.ctaText}>Get Started</Text>
             </Pressable>

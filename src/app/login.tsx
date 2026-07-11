@@ -122,7 +122,7 @@ export default function LoginScreen() {
           </View>
 
           {/* Sign In */}
-          <Pressable style={styles.signInButton} onPress={() => {}}>
+          <Pressable style={styles.signInButton} onPress={() => router.replace("/home")}>
             <Text style={styles.signInText}>Sign In</Text>
           </Pressable>
 
@@ -153,7 +153,7 @@ export default function LoginScreen() {
           {/* Sign Up */}
           <View style={styles.signupRow}>
             <Text style={styles.signupText}>Don&apos;t have an account? </Text>
-            <Pressable onPress={() => {}}>
+            <Pressable onPress={() => router.push("/signup")}>
               <Text style={styles.signupLink}>Sign Up</Text>
             </Pressable>
           </View>

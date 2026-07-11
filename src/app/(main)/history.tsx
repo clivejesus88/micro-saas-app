@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import {
   Bookmark,
   ChevronDown,
@@ -129,6 +130,7 @@ const SCANS_DATA: ScanItem[] = [
 
 export default function HistoryScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [activeFilter, setActiveFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const {
@@ -238,7 +240,7 @@ export default function HistoryScreen() {
         {/* Scan List */}
         <View style={styles.scanList}>
           {SCANS_DATA.map((scan) => (
-            <View key={scan.id} style={styles.scanCard}>
+            <Pressable key={scan.id} style={styles.scanCard} onPress={() => router.push({ pathname: "/analysis", params: { productId: scan.id } })}>
               <Image
                 source={scan.image}
                 style={styles.scanImage}
@@ -278,7 +280,7 @@ export default function HistoryScreen() {
                   />
                 </Pressable>
               </View>
-            </View>
+            </Pressable>
           ))}
         </View>
       </ScrollView>

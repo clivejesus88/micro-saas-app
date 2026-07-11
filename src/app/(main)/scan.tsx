@@ -89,10 +89,10 @@ export default function ScanScreen() {
         </View>
 
         <View style={styles.actions}>
-          <Pressable style={styles.scanButton} onPress={() => {}}>
+          <Pressable style={styles.scanButton} onPress={() => router.push("/analysis")}>
             <Text style={styles.scanButtonText}>Scan for Arbitrage</Text>
           </Pressable>
-          <Pressable style={styles.uploadButton} onPress={() => {}}>
+          <Pressable style={styles.uploadButton} onPress={() => router.push("/analysis")}>
             <ImageIcon size={16} color="#FF6B1A" strokeWidth={2} />
             <Text style={styles.uploadButtonText}>Upload from gallery</Text>
           </Pressable>
@@ -107,7 +107,7 @@ export default function ScanScreen() {
             contentContainerStyle={styles.recentScrollContent}
           >
             {RECENT_SCANS.map((scan) => (
-              <View key={scan.id} style={styles.recentCard}>
+              <Pressable key={scan.id} style={styles.recentCard} onPress={() => router.push("/analysis")}>
                 <Image
                   source={scan.image}
                   style={styles.recentImage}
@@ -116,7 +116,7 @@ export default function ScanScreen() {
                 <View style={styles.recentBadge}>
                   <Text style={styles.recentBadgeText}>{scan.markup}</Text>
                 </View>
-              </View>
+                </Pressable>
             ))}
           </ScrollView>
         </View>

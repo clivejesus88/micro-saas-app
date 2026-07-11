@@ -7,6 +7,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import {
   Bell,
   ScanLine,
@@ -84,6 +85,7 @@ const PROGRESS = Math.min(TOTAL_SAVED / SAVINGS_GOAL, 1);
 
 export default function VaultScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const {
     onScrollBeginDrag,
     onScrollEndDrag,
@@ -185,7 +187,7 @@ export default function VaultScreen() {
 
           <View style={styles.itemsGrid}>
             {SAVED_ITEMS.map((item) => (
-              <View key={item.id} style={styles.card}>
+              <Pressable key={item.id} style={styles.card} onPress={() => router.push({ pathname: "/analysis", params: { productId: item.id } })}>
                 <View style={styles.cardImageWrapper}>
                   <Image
                     source={item.imageUrl}
@@ -209,7 +211,7 @@ export default function VaultScreen() {
                     ${item.price.toLocaleString()}
                   </Text>
                 </View>
-              </View>
+              </Pressable>
             ))}
           </View>
         </View>

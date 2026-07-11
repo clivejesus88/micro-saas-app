@@ -7,6 +7,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { useResponsive } from "@/hooks/use-responsive";
 import { MAX_WIDTH, BOTTOM_NAV_HEIGHT, MARKUP_CARD_RATIO } from "@/constants/layout";
 import { useScrollContext } from "@/contexts/scroll-context";
@@ -101,6 +102,7 @@ const TRENDING_FINDS: ProductItem[] = [
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { screenWidth } = useResponsive();
+  const router = useRouter();
   const {
     onScrollBeginDrag,
     onScrollEndDrag,
@@ -185,6 +187,7 @@ export default function HomeScreen() {
               <Pressable
                 key={item.id}
                 style={[styles.markupCard, { width: markupCardWidth }]}
+                onPress={() => router.push({ pathname: "/analysis", params: { productId: item.id } })}
               >
                 <Image
                   source={item.imageUrl}
@@ -214,14 +217,14 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Trending Finds</Text>
-            <Pressable>
+            <Pressable onPress={() => router.push("/history")}>
               <Text style={styles.seeAll}>See all</Text>
             </Pressable>
           </View>
 
           <View style={styles.trendingList}>
             {TRENDING_FINDS.map((item) => (
-              <Pressable key={item.id} style={styles.trendingCard}>
+              <Pressable key={item.id} style={styles.trendingCard} onPress={() => router.push({ pathname: "/analysis", params: { productId: item.id } })}>
                 <Image
                   source={item.imageUrl}
                   style={styles.trendingImage}

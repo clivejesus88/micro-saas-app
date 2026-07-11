@@ -158,7 +158,7 @@ export default function PaywallScreen() {
         </View>
 
         {/* CTA */}
-        <Pressable style={styles.ctaButton} onPress={() => {}}>
+        <Pressable style={styles.ctaButton} onPress={() => router.replace("/home")}>
           <Text style={styles.ctaText}>Start Free 7-Day Trial</Text>
         </Pressable>
 
@@ -166,7 +166,7 @@ export default function PaywallScreen() {
           No charge until trial ends. Cancel anytime.
         </Text>
 
-        <Pressable style={styles.restoreButton} onPress={() => {}}>
+        <Pressable style={styles.restoreButton} onPress={() => router.replace("/home")}>
           <Text style={styles.restoreText}>Restore Purchase</Text>
         </Pressable>
       </ScrollView>

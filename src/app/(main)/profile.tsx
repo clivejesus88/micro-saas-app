@@ -29,17 +29,18 @@ interface MenuRow {
   icon: React.ElementType;
   iconColor: string;
   badge?: string;
+  route?: string;
 }
 
 const ACCOUNT_ROWS: MenuRow[] = [
   { id: "edit-profile", label: "Edit Profile", icon: UserRound, iconColor: "#4A7A28" },
   { id: "notifications", label: "Notifications", icon: Bell, iconColor: "#4A7A28", badge: "3" },
-  { id: "saved-items", label: "Saved Items", icon: Bookmark, iconColor: "#4A7A28" },
-  { id: "scan-history", label: "Scan History", icon: Clock, iconColor: "#4A7A28" },
+  { id: "saved-items", label: "Saved Items", icon: Bookmark, iconColor: "#4A7A28", route: "/vault" },
+  { id: "scan-history", label: "Scan History", icon: Clock, iconColor: "#4A7A28", route: "/history" },
 ];
 
 const SUBSCRIPTION_ROWS: MenuRow[] = [
-  { id: "pro", label: "Fringe Pro", icon: Crown, iconColor: "#FF6B1A", badge: "Active" },
+  { id: "pro", label: "Fringe Pro", icon: Crown, iconColor: "#FF6B1A", badge: "Active", route: "/paywall" },
   { id: "billing", label: "Manage Billing", icon: CreditCard, iconColor: "#888888" },
 ];
 
@@ -143,6 +144,7 @@ function MenuSection({
   rows: MenuRow[];
   lastRowHasBorder: boolean;
 }) {
+  const router = useRouter();
   return (
     <View style={styles.menuSection}>
       <Text style={styles.menuSectionTitle}>{title}</Text>
@@ -154,6 +156,7 @@ function MenuSection({
             <Pressable
               key={row.id}
               style={[styles.menuRow, !isLast && styles.menuRowBorder]}
+              onPress={() => row.route && router.push(row.route as any)}
             >
               <View style={styles.menuIcon}>
                 <Icon size={22} color={row.iconColor} strokeWidth={2} />

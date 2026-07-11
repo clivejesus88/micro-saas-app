@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -165,6 +166,12 @@ export default function AnalysisScreen() {
   } = useScrollContext();
 
   const bottomSpacer = BOTTOM_NAV_HEIGHT + insets.bottom + 100;
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <View style={styles.root}>
@@ -371,9 +378,9 @@ export default function AnalysisScreen() {
             <RefreshCw size={12} color="#AAAAAA" strokeWidth={2} />
             <Text style={styles.ctaRefreshText}>Prices updated 2 min ago</Text>
           </View>
-          <Pressable style={styles.ctaButton}>
+          <Pressable style={styles.ctaButton} onPress={handleCopy}>
             <Copy size={15} color="#FFFFFF" strokeWidth={2.2} />
-            <Text style={styles.ctaButtonText}>Copy AI Search String</Text>
+            <Text style={styles.ctaButtonText}>{copied ? "Copied!" : "Copy AI Search String"}</Text>
           </Pressable>
         </View>
       </View>

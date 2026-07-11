@@ -212,7 +212,7 @@ export default function SignUpScreen() {
         </View>
 
         {/* Create Account */}
-        <Pressable style={styles.createButton} onPress={() => {}}>
+        <Pressable style={styles.createButton} onPress={() => router.replace("/paywall")}>
           <Text style={styles.createText}>Create Account</Text>
         </Pressable>
 
