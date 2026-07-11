@@ -210,9 +210,10 @@ export default function HistoryScreen() {
           {FILTER_CHIPS.map((chip) => (
             <Pressable
               key={chip}
-              style={[
+              style={({ pressed }) => [
                 styles.chip,
                 activeFilter === chip && styles.chipActive,
+                pressed && { opacity: 0.7 },
               ]}
               onPress={() => setActiveFilter(chip)}
             >
@@ -231,7 +232,7 @@ export default function HistoryScreen() {
         {/* Recent Scans Header */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Scans</Text>
-          <Pressable style={styles.sortButton}>
+          <Pressable style={({ pressed }) => [styles.sortButton, pressed && { opacity: 0.6 }]}>
             <Text style={styles.sortText}>Sort by: Latest</Text>
             <ChevronDown size={14} color="#888888" strokeWidth={2} />
           </Pressable>
@@ -240,7 +241,7 @@ export default function HistoryScreen() {
         {/* Scan List */}
         <View style={styles.scanList}>
           {SCANS_DATA.map((scan) => (
-            <Pressable key={scan.id} style={styles.scanCard} onPress={() => router.push({ pathname: "/analysis", params: { productId: scan.id } })}>
+            <Pressable key={scan.id} style={({ pressed }) => [styles.scanCard, pressed && { opacity: 0.92 }]} onPress={() => router.push({ pathname: "/analysis", params: { productId: scan.id } })}>
               <Image
                 source={scan.image}
                 style={styles.scanImage}
@@ -338,13 +339,15 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 100,
     backgroundColor: "#FFFFFF",
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.04)",
     shadowColor: "#1A1A1A",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
   },
   statValue: {
     fontFamily: "Inter_700Bold",
@@ -447,19 +450,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    borderRadius: 24,
-    padding: 16,
-    gap: 16,
+    borderRadius: 16,
+    padding: 14,
+    gap: 14,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.04)",
     shadowColor: "#1A1A1A",
-    shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.09,
-    shadowRadius: 45,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 2,
   },
   scanImage: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
+    width: 60,
+    height: 60,
+    borderRadius: 12,
     backgroundColor: "#F5F5F5",
   },
   scanInfo: {
@@ -506,12 +511,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FF6B1A",
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
-    shadowColor: "#FF6B1A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 3,
+    borderRadius: 10,
   },
   markupBadgeText: {
     ...TypeScale.captionMd,

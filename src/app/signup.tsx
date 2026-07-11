@@ -45,7 +45,7 @@ export default function SignUpScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Pressable
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/onboarding"); }}
           hitSlop={8}
         >
           <ChevronLeft size={24} color="#FFFFFF" strokeWidth={2} />

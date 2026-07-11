@@ -159,9 +159,10 @@ export default function VaultScreen() {
           {CATEGORIES.map((cat, index) => (
             <Pressable
               key={cat.id}
-              style={[
+              style={({ pressed }) => [
                 styles.categoryPill,
                 index === 0 && styles.categoryPillActive,
+                pressed && { opacity: 0.7 },
               ]}
             >
               <Text
@@ -187,7 +188,7 @@ export default function VaultScreen() {
 
           <View style={styles.itemsGrid}>
             {SAVED_ITEMS.map((item) => (
-              <Pressable key={item.id} style={styles.card} onPress={() => router.push({ pathname: "/analysis", params: { productId: item.id } })}>
+              <Pressable key={item.id} style={({ pressed }) => [styles.card, pressed && { opacity: 0.92 }]} onPress={() => router.push({ pathname: "/analysis", params: { productId: item.id } })}>
                 <View style={styles.cardImageWrapper}>
                   <Image
                     source={item.imageUrl}
@@ -392,14 +393,16 @@ const styles = StyleSheet.create({
   // Card
   card: {
     width: "47.5%",
-    borderRadius: 24,
+    borderRadius: 16,
     backgroundColor: "#FFFFFF",
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.04)",
     shadowColor: "#1A1A1A",
-    shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.09,
-    shadowRadius: 45,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 2,
   },
   cardImageWrapper: {
     position: "relative",
@@ -411,13 +414,12 @@ const styles = StyleSheet.create({
   },
   markupBadge: {
     position: "absolute",
-    top: 0,
-    right: 0,
+    top: 8,
+    right: 8,
     backgroundColor: "#FF6B1A",
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderBottomLeftRadius: 12,
-    borderTopRightRadius: 24,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
   markupBadgeText: {
     ...TypeScale.captionSm,

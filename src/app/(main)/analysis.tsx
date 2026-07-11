@@ -178,7 +178,7 @@ export default function AnalysisScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <Pressable
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/home"); }}
           hitSlop={8}
         >
           <ChevronLeft size={24} color="#1A1A1A" strokeWidth={2} />

@@ -52,7 +52,7 @@ export default function ScanScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Pressable
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/home"); }}
           hitSlop={8}
         >
           <ArrowLeft size={22} color="#1A1A1A" strokeWidth={2} />
@@ -89,10 +89,10 @@ export default function ScanScreen() {
         </View>
 
         <View style={styles.actions}>
-          <Pressable style={styles.scanButton} onPress={() => router.push("/analysis")}>
+          <Pressable style={({ pressed }) => [styles.scanButton, pressed && { opacity: 0.88 }]} onPress={() => router.push("/analysis")}>
             <Text style={styles.scanButtonText}>Scan for Arbitrage</Text>
           </Pressable>
-          <Pressable style={styles.uploadButton} onPress={() => router.push("/analysis")}>
+          <Pressable style={({ pressed }) => [styles.uploadButton, pressed && { opacity: 0.6 }]} onPress={() => router.push("/analysis")}>
             <ImageIcon size={16} color="#FF6B1A" strokeWidth={2} />
             <Text style={styles.uploadButtonText}>Upload from gallery</Text>
           </Pressable>
@@ -107,7 +107,7 @@ export default function ScanScreen() {
             contentContainerStyle={styles.recentScrollContent}
           >
             {RECENT_SCANS.map((scan) => (
-              <Pressable key={scan.id} style={styles.recentCard} onPress={() => router.push("/analysis")}>
+              <Pressable key={scan.id} style={({ pressed }) => [styles.recentCard, pressed && { opacity: 0.85 }]} onPress={() => router.push("/analysis")}>
                 <Image
                   source={scan.image}
                   style={styles.recentImage}
@@ -273,11 +273,13 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   recentCard: {
-    width: 112,
-    height: 112,
-    borderRadius: 12,
+    width: 116,
+    height: 116,
+    borderRadius: 14,
     overflow: "hidden",
     backgroundColor: "#F5F5F5",
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.04)",
   },
   recentImage: {
     width: "100%",
@@ -285,17 +287,12 @@ const styles = StyleSheet.create({
   },
   recentBadge: {
     position: "absolute",
-    bottom: 8,
-    right: 8,
+    bottom: 6,
+    right: 6,
     backgroundColor: "#FF6B1A",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    shadowColor: "#FF6B1A",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.22,
-    shadowRadius: 16,
-    elevation: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
   recentBadgeText: {
     ...TypeScale.captionXs,

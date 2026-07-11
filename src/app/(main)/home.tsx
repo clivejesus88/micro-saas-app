@@ -186,7 +186,7 @@ export default function HomeScreen() {
             {TOP_MARKUPS.map((item) => (
               <Pressable
                 key={item.id}
-                style={[styles.markupCard, { width: markupCardWidth }]}
+                style={({ pressed }) => [styles.markupCard, { width: markupCardWidth }, pressed && { opacity: 0.92 }]}
                 onPress={() => router.push({ pathname: "/analysis", params: { productId: item.id } })}
               >
                 <Image
@@ -217,14 +217,14 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Trending Finds</Text>
-            <Pressable onPress={() => router.push("/history")}>
+            <Pressable onPress={() => router.push("/history")} style={({ pressed }) => pressed && { opacity: 0.5 }}>
               <Text style={styles.seeAll}>See all</Text>
             </Pressable>
           </View>
 
           <View style={styles.trendingList}>
             {TRENDING_FINDS.map((item) => (
-              <Pressable key={item.id} style={styles.trendingCard} onPress={() => router.push({ pathname: "/analysis", params: { productId: item.id } })}>
+              <Pressable key={item.id} style={({ pressed }) => [styles.trendingCard, pressed && { opacity: 0.92 }]} onPress={() => router.push({ pathname: "/analysis", params: { productId: item.id } })}>
                 <Image
                   source={item.imageUrl}
                   style={styles.trendingImage}
@@ -352,18 +352,20 @@ const styles = StyleSheet.create({
   },
   markupCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 10,
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.04)",
     shadowColor: "#1A1A1A",
-    shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.09,
-    shadowRadius: 45,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 2,
   },
   markupImage: {
     aspectRatio: 1.08,
     width: "100%",
-    borderRadius: 18,
+    borderRadius: 12,
     backgroundColor: "#F5F5F5",
   },
   markupBody: {
@@ -389,8 +391,8 @@ const styles = StyleSheet.create({
   markupBadge: {
     backgroundColor: "#FF6B1A",
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
   markupBadgeText: {
     ...TypeScale.captionXs,
@@ -403,18 +405,20 @@ const styles = StyleSheet.create({
   },
   trendingCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 28,
+    borderRadius: 20,
     padding: 12,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.04)",
     shadowColor: "#1A1A1A",
-    shadowOffset: { width: 0, height: 24 },
-    shadowOpacity: 0.1,
-    shadowRadius: 70,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 20,
+    elevation: 2,
   },
   trendingImage: {
     aspectRatio: 4 / 3,
     width: "100%",
-    borderRadius: 24,
+    borderRadius: 14,
     backgroundColor: "#F5F5F5",
   },
   trendingBody: {
@@ -455,14 +459,9 @@ const styles = StyleSheet.create({
   },
   trendingBadge: {
     backgroundColor: "#FF6B1A",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    shadowColor: "#FF6B1A",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.22,
-    shadowRadius: 22,
-    elevation: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
   },
   trendingBadgeText: {
     ...TypeScale.captionSm,
