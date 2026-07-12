@@ -1,3 +1,4 @@
+import { Alert } from "react-native";
 import {
   Pressable,
   ScrollView,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react-native";
 import { MAX_WIDTH, BOTTOM_NAV_HEIGHT } from "@/constants/layout";
 import { useScrollContext } from "@/contexts/scroll-context";
+import { useUserProfile } from "@/contexts/user-context";
 import { TypeScale } from "@/constants/typography";
 
 interface MenuRow {
@@ -33,15 +35,15 @@ interface MenuRow {
 }
 
 const ACCOUNT_ROWS: MenuRow[] = [
-  { id: "edit-profile", label: "Edit Profile", icon: UserRound, iconColor: "#4A7A28" },
-  { id: "notifications", label: "Notifications", icon: Bell, iconColor: "#4A7A28", badge: "3" },
+  { id: "edit-profile", label: "Edit Profile", icon: UserRound, iconColor: "#4A7A28", route: "/edit-profile" },
+  { id: "notifications", label: "Notifications", icon: Bell, iconColor: "#4A7A28", badge: "3", route: "/notifications" },
   { id: "saved-items", label: "Saved Items", icon: Bookmark, iconColor: "#4A7A28", route: "/vault" },
   { id: "scan-history", label: "Scan History", icon: Clock, iconColor: "#4A7A28", route: "/history" },
 ];
 
 const SUBSCRIPTION_ROWS: MenuRow[] = [
   { id: "pro", label: "Fringe Pro", icon: Crown, iconColor: "#FF6B1A", badge: "Active", route: "/paywall" },
-  { id: "billing", label: "Manage Billing", icon: CreditCard, iconColor: "#888888" },
+  { id: "billing", label: "Manage Billing", icon: CreditCard, iconColor: "#888888", route: "/billing" },
 ];
 
 const SUPPORT_ROWS: MenuRow[] = [
@@ -52,6 +54,13 @@ const SUPPORT_ROWS: MenuRow[] = [
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { name, email, avatarUri } = useUserProfile();
+  const initials = name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
   const {
     onScrollBeginDrag,
     onScrollEndDrag,
@@ -87,13 +96,17 @@ export default function ProfileScreen() {
         <View style={styles.profileCard}>
           <View style={styles.avatarWrapper}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>AR</Text>
+              {avatarUri ? (
+                <Text style={styles.avatarText}>{initials}</Text>
+              ) : (
+                <Text style={styles.avatarText}>{initials}</Text>
+              )}
               <View style={styles.statusDot} />
             </View>
           </View>
 
-          <Text style={styles.profileName}>Alex Rivera</Text>
-          <Text style={styles.profileEmail}>alex@email.com</Text>
+          <Text style={styles.profileName}>{name}</Text>
+          <Text style={styles.profileEmail}>{email}</Text>
 
           <View style={styles.proBadge}>
             <Text style={styles.proBadgeText}>PRO Member</Text>
@@ -145,6 +158,15 @@ function MenuSection({
   lastRowHasBorder: boolean;
 }) {
   const router = useRouter();
+  const handlePress = (row: MenuRow) => {
+    if (row.route) {
+      router.push(row.route as any);
+    } else if (row.id === "help") {
+      Alert.alert("Help Center", "Visit help@fringe.app for support.");
+    } else if (row.id === "rate") {
+      Alert.alert("Rate Fringe", "Thanks for your support! Rate us on the App Store.");
+    }
+  };
   return (
     <View style={styles.menuSection}>
       <Text style={styles.menuSectionTitle}>{title}</Text>
@@ -156,7 +178,7 @@ function MenuSection({
             <Pressable
               key={row.id}
               style={[styles.menuRow, !isLast && styles.menuRowBorder]}
-              onPress={() => row.route && router.push(row.route as any)}
+              onPress={() => handlePress(row)}
             >
               <View style={styles.menuIcon}>
                 <Icon size={22} color={row.iconColor} strokeWidth={2} />
