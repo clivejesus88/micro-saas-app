@@ -39,7 +39,7 @@ export default function ScanScreen() {
 
       const result = await launcher({
         mediaTypes: ["images"],
-        allowsEditing: true,
+        allowsEditing: false,
         quality: 0.85,
       });
 
@@ -122,15 +122,29 @@ export default function ScanScreen() {
                   style={styles.previewImage}
                   contentFit="cover"
                 />
-                <Pressable
-                  style={styles.clearButton}
-                  onPress={handleClear}
-                  hitSlop={8}
-                >
-                  <View style={styles.clearButtonBg}>
-                    <X size={16} color="#FFFFFF" strokeWidth={2.5} />
+                <View style={styles.previewOverlay}>
+                  <Text style={styles.previewHint}>Is this the right image?</Text>
+                  <View style={styles.previewActions}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.previewRejectBtn,
+                        pressed && { opacity: 0.8 },
+                      ]}
+                      onPress={handleClear}
+                    >
+                      <X size={24} color="#FFFFFF" strokeWidth={2.5} />
+                    </Pressable>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.previewAcceptBtn,
+                        pressed && { opacity: 0.8 },
+                      ]}
+                      onPress={handleAnalyze}
+                    >
+                      <Check size={24} color="#FFFFFF" strokeWidth={2.5} />
+                    </Pressable>
                   </View>
-                </Pressable>
+                </View>
               </>
             )}
 
