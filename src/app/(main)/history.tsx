@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,7 +11,13 @@ import {
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { BottomSheet } from "@expo/ui";
+import { BlurView } from "expo-blur";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  runOnJS,
+} from "react-native-reanimated";
 import {
   Bookmark,
   ChevronDown,
@@ -146,6 +153,29 @@ export default function HistoryScreen() {
   const [sortBy, setSortBy] = useState("latest");
   const [tempSortBy, setTempSortBy] = useState("latest");
   const [tempFilter, setTempFilter] = useState("All");
+
+  const sheetY = useSharedValue(1);
+
+  const sheetAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: sheetY.value * 400 }],
+    opacity: withTiming(sheetY.value > 0.5 ? 0 : 1, { duration: 200 }),
+  }));
+
+  const overlayAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: withTiming(sheetY.value > 0.5 ? 0 : 0.4, { duration: 250 }),
+  }));
+
+  const openSheet = () => {
+    setTempSortBy(sortBy);
+    setTempFilter(activeFilter);
+    setIsFilterOpen(true);
+    sheetY.value = withTiming(0, { duration: 300 });
+  };
+
+  const closeSheet = () => {
+    sheetY.value = withTiming(1, { duration: 260 });
+    runOnJS(setIsFilterOpen)(false);
+  };
   const {
     onScrollBeginDrag,
     onScrollEndDrag,
@@ -178,11 +208,7 @@ export default function HistoryScreen() {
               pressed && { opacity: 0.7 },
             ]}
             hitSlop={8}
-            onPress={() => {
-              setTempSortBy(sortBy);
-              setTempFilter(activeFilter);
-              setIsFilterOpen(true);
-            }}
+            onPress={openSheet}
           >
             <SlidersHorizontal
               size={22}
@@ -312,100 +338,108 @@ export default function HistoryScreen() {
         </View>
       </ScrollView>
 
-      <BottomSheet
-        isPresented={isFilterOpen}
-        onDismiss={() => setIsFilterOpen(false)}
-        snapPoints={["50%"]}
+      <Modal
+        visible={isFilterOpen}
+        transparent
+        animationType="none"
+        onRequestClose={closeSheet}
+        statusBarTranslucent
       >
-        <View style={styles.sheetContent}>
-          {/* Header */}
-          <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>Filter & Sort</Text>
-            <Pressable
-              onPress={() => {
-                setIsFilterOpen(false);
-              }}
-              hitSlop={8}
-            >
-              <Text style={styles.sheetClose}>Done</Text>
-            </Pressable>
-          </View>
+        <View style={styles.modalRoot}>
+          <Animated.View style={[styles.modalOverlay, overlayAnimatedStyle]}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={closeSheet} />
+          </Animated.View>
 
-          {/* Sort Section */}
-          <Text style={styles.sheetSectionLabel}>Sort by</Text>
-          <View style={styles.sheetSortGroup}>
-            {SORT_OPTIONS.map((opt) => (
-              <Pressable
-                key={opt.key}
-                style={[
-                  styles.sheetSortOption,
-                  tempSortBy === opt.key && styles.sheetSortOptionActive,
-                ]}
-                onPress={() => setTempSortBy(opt.key)}
-              >
-                <Text
-                  style={[
-                    styles.sheetSortText,
-                    tempSortBy === opt.key && styles.sheetSortTextActive,
-                  ]}
-                >
-                  {opt.label}
-                </Text>
-                {tempSortBy === opt.key && (
-                  <Check size={16} color="#1B4332" strokeWidth={2.5} />
-                )}
-              </Pressable>
-            ))}
-          </View>
+          <Animated.View style={[styles.sheetContainer, sheetAnimatedStyle]}>
+            <BlurView intensity={90} tint="light" style={styles.sheetBlur}>
+              <View style={styles.sheetHandle} />
+              <View style={styles.sheetContent}>
+                {/* Header */}
+                <View style={styles.sheetHeader}>
+                  <Text style={styles.sheetTitle}>Filter & Sort</Text>
+                  <Pressable onPress={closeSheet} hitSlop={8}>
+                    <Text style={styles.sheetClose}>Done</Text>
+                  </Pressable>
+                </View>
 
-          {/* Category Section */}
-          <Text style={styles.sheetSectionLabel}>Category</Text>
-          <View style={styles.sheetChipRow}>
-            {FILTER_CHIPS.map((chip) => (
-              <Pressable
-                key={chip}
-                style={[
-                  styles.sheetChip,
-                  tempFilter === chip && styles.sheetChipActive,
-                ]}
-                onPress={() => setTempFilter(chip)}
-              >
-                <Text
-                  style={[
-                    styles.sheetChipText,
-                    tempFilter === chip && styles.sheetChipTextActive,
-                  ]}
-                >
-                  {chip}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+                {/* Sort Section */}
+                <Text style={styles.sheetSectionLabel}>Sort by</Text>
+                <View style={styles.sheetSortGroup}>
+                  {SORT_OPTIONS.map((opt) => (
+                    <Pressable
+                      key={opt.key}
+                      style={[
+                        styles.sheetSortOption,
+                        tempSortBy === opt.key && styles.sheetSortOptionActive,
+                      ]}
+                      onPress={() => setTempSortBy(opt.key)}
+                    >
+                      <Text
+                        style={[
+                          styles.sheetSortText,
+                          tempSortBy === opt.key && styles.sheetSortTextActive,
+                        ]}
+                      >
+                        {opt.label}
+                      </Text>
+                      {tempSortBy === opt.key && (
+                        <Check size={16} color="#1B4332" strokeWidth={2.5} />
+                      )}
+                    </Pressable>
+                  ))}
+                </View>
 
-          {/* Apply / Reset */}
-          <View style={styles.sheetActions}>
-            <Pressable
-              style={styles.sheetResetBtn}
-              onPress={() => {
-                setTempSortBy("latest");
-                setTempFilter("All");
-              }}
-            >
-              <Text style={styles.sheetResetText}>Reset</Text>
-            </Pressable>
-            <Pressable
-              style={styles.sheetApplyBtn}
-              onPress={() => {
-                setSortBy(tempSortBy);
-                setActiveFilter(tempFilter);
-                setIsFilterOpen(false);
-              }}
-            >
-              <Text style={styles.sheetApplyText}>Apply</Text>
-            </Pressable>
-          </View>
+                {/* Category Section */}
+                <Text style={styles.sheetSectionLabel}>Category</Text>
+                <View style={styles.sheetChipRow}>
+                  {FILTER_CHIPS.map((chip) => (
+                    <Pressable
+                      key={chip}
+                      style={[
+                        styles.sheetChip,
+                        tempFilter === chip && styles.sheetChipActive,
+                      ]}
+                      onPress={() => setTempFilter(chip)}
+                    >
+                      <Text
+                        style={[
+                          styles.sheetChipText,
+                          tempFilter === chip && styles.sheetChipTextActive,
+                        ]}
+                      >
+                        {chip}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+
+                {/* Apply / Reset */}
+                <View style={styles.sheetActions}>
+                  <Pressable
+                    style={styles.sheetResetBtn}
+                    onPress={() => {
+                      setTempSortBy("latest");
+                      setTempFilter("All");
+                    }}
+                  >
+                    <Text style={styles.sheetResetText}>Reset</Text>
+                  </Pressable>
+                  <Pressable
+                    style={styles.sheetApplyBtn}
+                    onPress={() => {
+                      setSortBy(tempSortBy);
+                      setActiveFilter(tempFilter);
+                      closeSheet();
+                    }}
+                  >
+                    <Text style={styles.sheetApplyText}>Apply</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </BlurView>
+          </Animated.View>
         </View>
-      </BottomSheet>
+      </Modal>
     </View>
   );
 }
@@ -648,9 +682,44 @@ const styles = StyleSheet.create({
     padding: 4,
   },
 
-  // Bottom Sheet
-  sheetContent: {
+  // Bottom Sheet (Modal)
+  modalRoot: {
     flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#000",
+  },
+  sheetContainer: {
+    maxHeight: "75%",
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 24,
+    overflow: "hidden",
+    backgroundColor: "rgba(255,255,255,0.85)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.6)",
+  },
+  sheetBlur: {
+    borderRadius: 24,
+    overflow: "hidden",
+  },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(0,0,0,0.12)",
+    alignSelf: "center",
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  sheetContent: {
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 32,
@@ -691,10 +760,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "rgba(0,0,0,0.04)",
   },
   sheetSortOptionActive: {
-    backgroundColor: "#E8F0E0",
+    backgroundColor: "rgba(74,122,40,0.10)",
   },
   sheetSortText: {
     ...TypeScale.bodyMd,
@@ -715,15 +784,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "rgba(0,0,0,0.04)",
   },
   sheetChipActive: {
-    backgroundColor: "#1C2A0E",
+    backgroundColor: "#1B4332",
   },
   sheetChipText: {
     ...TypeScale.captionLg,
     fontWeight: "500",
-    color: "#888888",
+    color: "#555555",
   },
   sheetChipTextActive: {
     color: "#FFFFFF",
@@ -739,7 +808,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 14,
     borderRadius: 14,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "rgba(0,0,0,0.04)",
   },
   sheetResetText: {
     ...TypeScale.bodyMd,
