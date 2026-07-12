@@ -10,9 +10,11 @@ import {
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { BottomSheet } from "@expo/ui";
 import {
   Bookmark,
   ChevronDown,
+  Check,
   Search,
   SlidersHorizontal,
 } from "lucide-react-native";
@@ -51,6 +53,13 @@ const FILTER_CHIPS = [
   "Home",
   "Sneakers",
   "Accessories",
+];
+
+const SORT_OPTIONS = [
+  { key: "latest", label: "Latest" },
+  { key: "oldest", label: "Oldest" },
+  { key: "price-high", label: "Price: High to Low" },
+  { key: "price-low", label: "Price: Low to High" },
 ];
 
 const SCANS_DATA: ScanItem[] = [
@@ -133,6 +142,10 @@ export default function HistoryScreen() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [sortBy, setSortBy] = useState("latest");
+  const [tempSortBy, setTempSortBy] = useState("latest");
+  const [tempFilter, setTempFilter] = useState("All");
   const {
     onScrollBeginDrag,
     onScrollEndDrag,
@@ -159,7 +172,18 @@ export default function HistoryScreen() {
         {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <Text style={styles.headerTitle}>History</Text>
-          <Pressable style={styles.filterButton} hitSlop={8}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.filterButton,
+              pressed && { opacity: 0.7 },
+            ]}
+            hitSlop={8}
+            onPress={() => {
+              setTempSortBy(sortBy);
+              setTempFilter(activeFilter);
+              setIsFilterOpen(true);
+            }}
+          >
             <SlidersHorizontal
               size={22}
               color="#1A1A1A"
@@ -233,7 +257,9 @@ export default function HistoryScreen() {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Scans</Text>
           <Pressable style={({ pressed }) => [styles.sortButton, pressed && { opacity: 0.6 }]}>
-            <Text style={styles.sortText}>Sort by: Latest</Text>
+            <Text style={styles.sortText}>
+              Sort by: {SORT_OPTIONS.find((o) => o.key === sortBy)?.label ?? "Latest"}
+            </Text>
             <ChevronDown size={14} color="#888888" strokeWidth={2} />
           </Pressable>
         </View>
@@ -285,6 +311,101 @@ export default function HistoryScreen() {
           ))}
         </View>
       </ScrollView>
+
+      <BottomSheet
+        isPresented={isFilterOpen}
+        onDismiss={() => setIsFilterOpen(false)}
+        snapPoints={["50%"]}
+      >
+        <View style={styles.sheetContent}>
+          {/* Header */}
+          <View style={styles.sheetHeader}>
+            <Text style={styles.sheetTitle}>Filter & Sort</Text>
+            <Pressable
+              onPress={() => {
+                setIsFilterOpen(false);
+              }}
+              hitSlop={8}
+            >
+              <Text style={styles.sheetClose}>Done</Text>
+            </Pressable>
+          </View>
+
+          {/* Sort Section */}
+          <Text style={styles.sheetSectionLabel}>Sort by</Text>
+          <View style={styles.sheetSortGroup}>
+            {SORT_OPTIONS.map((opt) => (
+              <Pressable
+                key={opt.key}
+                style={[
+                  styles.sheetSortOption,
+                  tempSortBy === opt.key && styles.sheetSortOptionActive,
+                ]}
+                onPress={() => setTempSortBy(opt.key)}
+              >
+                <Text
+                  style={[
+                    styles.sheetSortText,
+                    tempSortBy === opt.key && styles.sheetSortTextActive,
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+                {tempSortBy === opt.key && (
+                  <Check size={16} color="#1B4332" strokeWidth={2.5} />
+                )}
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Category Section */}
+          <Text style={styles.sheetSectionLabel}>Category</Text>
+          <View style={styles.sheetChipRow}>
+            {FILTER_CHIPS.map((chip) => (
+              <Pressable
+                key={chip}
+                style={[
+                  styles.sheetChip,
+                  tempFilter === chip && styles.sheetChipActive,
+                ]}
+                onPress={() => setTempFilter(chip)}
+              >
+                <Text
+                  style={[
+                    styles.sheetChipText,
+                    tempFilter === chip && styles.sheetChipTextActive,
+                  ]}
+                >
+                  {chip}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Apply / Reset */}
+          <View style={styles.sheetActions}>
+            <Pressable
+              style={styles.sheetResetBtn}
+              onPress={() => {
+                setTempSortBy("latest");
+                setTempFilter("All");
+              }}
+            >
+              <Text style={styles.sheetResetText}>Reset</Text>
+            </Pressable>
+            <Pressable
+              style={styles.sheetApplyBtn}
+              onPress={() => {
+                setSortBy(tempSortBy);
+                setActiveFilter(tempFilter);
+                setIsFilterOpen(false);
+              }}
+            >
+              <Text style={styles.sheetApplyText}>Apply</Text>
+            </Pressable>
+          </View>
+        </View>
+      </BottomSheet>
     </View>
   );
 }
@@ -525,5 +646,117 @@ const styles = StyleSheet.create({
   },
   bookmarkButton: {
     padding: 4,
+  },
+
+  // Bottom Sheet
+  sheetContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 32,
+  },
+  sheetHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
+  sheetTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#1A1A1A",
+  },
+  sheetClose: {
+    ...TypeScale.bodyMd,
+    fontWeight: "600",
+    color: "#4A7A28",
+  },
+  sheetSectionLabel: {
+    ...TypeScale.captionLg,
+    fontWeight: "600",
+    color: "#888888",
+    marginBottom: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  sheetSortGroup: {
+    gap: 4,
+    marginBottom: 24,
+  },
+  sheetSortOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: "#F5F5F5",
+  },
+  sheetSortOptionActive: {
+    backgroundColor: "#E8F0E0",
+  },
+  sheetSortText: {
+    ...TypeScale.bodyMd,
+    fontWeight: "400",
+    color: "#1A1A1A",
+  },
+  sheetSortTextActive: {
+    fontWeight: "600",
+    color: "#1B4332",
+  },
+  sheetChipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 32,
+  },
+  sheetChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "#F5F5F5",
+  },
+  sheetChipActive: {
+    backgroundColor: "#1C2A0E",
+  },
+  sheetChipText: {
+    ...TypeScale.captionLg,
+    fontWeight: "500",
+    color: "#888888",
+  },
+  sheetChipTextActive: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  sheetActions: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  sheetResetBtn: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: "#F5F5F5",
+  },
+  sheetResetText: {
+    ...TypeScale.bodyMd,
+    fontWeight: "600",
+    color: "#888888",
+  },
+  sheetApplyBtn: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: "#1B4332",
+  },
+  sheetApplyText: {
+    ...TypeScale.bodyMd,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });

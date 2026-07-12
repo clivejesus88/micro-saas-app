@@ -83,14 +83,14 @@ export function BottomNav() {
                     <View style={[styles.iconWrap, isActive && styles.iconWrapActive]}>
                       <Icon
                         size={22}
-                        color={isActive ? "#FFFFFF" : "rgba(255,255,255,0.45)"}
+                        color={isActive ? "#1B4332" : "rgba(0,0,0,0.35)"}
                         strokeWidth={isActive ? 2.2 : 1.8}
                       />
                     </View>
                     <Text
                       style={[
                         styles.tabLabel,
-                        { color: isActive ? "#FFFFFF" : "rgba(255,255,255,0.45)" },
+                        { color: isActive ? "#1B4332" : "rgba(0,0,0,0.35)" },
                         isActive && { fontWeight: "600" },
                       ]}
                     >
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   },
   containerInner: {
     width: "100%",
-    backgroundColor: "rgba(255,255,255,0.06)",
+    backgroundColor: "rgba(74,122,40,0.16)",
     borderRadius: 28,
     overflow: "hidden",
     shadowColor: "#000",
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.25)",
+    borderColor: "rgba(74,122,40,0.22)",
   },
   blur: {
     borderRadius: 28,
