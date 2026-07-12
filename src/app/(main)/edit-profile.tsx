@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Alert } from "react-native";
 import {
   Pressable,
   ScrollView,
@@ -9,17 +10,20 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 import { ChevronLeft, Camera } from "lucide-react-native";
 import { MAX_WIDTH, BOTTOM_NAV_HEIGHT } from "@/constants/layout";
 import { useScrollContext } from "@/contexts/scroll-context";
+import { useUserProfile } from "@/contexts/user-context";
 import { TypeScale } from "@/constants/typography";
 
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [name, setName] = useState("Alex Rivera");
-  const [email, setEmail] = useState("alex@email.com");
-  const [phone, setPhone] = useState("+1 (555) 123-4567");
+  const { name: defaultName, email: defaultEmail, phone: defaultPhone, updateProfile } = useUserProfile();
+  const [name, setName] = useState(defaultName);
+  const [email, setEmail] = useState(defaultEmail);
+  const [phone, setPhone] = useState(defaultPhone);
   const {
     onScrollBeginDrag,
     onScrollEndDrag,
@@ -28,6 +32,39 @@ export default function EditProfileScreen() {
   } = useScrollContext();
 
   const bottomSpacer = BOTTOM_NAV_HEIGHT + insets.bottom + 20;
+
+  const initials = name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  const handlePickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission needed", "Please grant photo library access to change your profile photo.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      updateProfile({ avatarUri: result.assets[0].uri });
+    }
+  };
+
+  const handleSave = () => {
+    if (!name.trim()) {
+      Alert.alert("Error", "Name cannot be empty.");
+      return;
+    }
+    updateProfile({ name: name.trim(), email: email.trim(), phone: phone.trim() });
+    router.back();
+  };
 
   return (
     <View style={styles.root}>
@@ -59,9 +96,9 @@ export default function EditProfileScreen() {
         {/* Avatar */}
         <View style={styles.avatarSection}>
           <View style={styles.avatarLarge}>
-            <Text style={styles.avatarText}>AR</Text>
+            <Text style={styles.avatarText}>{initials}</Text>
           </View>
-          <Pressable style={styles.cameraButton}>
+          <Pressable style={styles.cameraButton} onPress={handlePickImage}>
             <Camera size={18} color="#FFFFFF" strokeWidth={2.2} />
           </Pressable>
           <Text style={styles.changePhotoText}>Change Photo</Text>
@@ -108,7 +145,7 @@ export default function EditProfileScreen() {
 
         {/* Save Button */}
         <View style={styles.saveWrapper}>
-          <Pressable style={styles.saveButton}>
+          <Pressable style={styles.saveButton} onPress={handleSave}>
             <Text style={styles.saveText}>Save Changes</Text>
           </Pressable>
         </View>

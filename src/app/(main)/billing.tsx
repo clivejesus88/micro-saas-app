@@ -1,3 +1,4 @@
+import { Alert } from "react-native";
 import {
   Pressable,
   ScrollView,
@@ -92,7 +93,10 @@ export default function BillingScreen() {
                 <Text style={styles.defaultBadgeText}>Default</Text>
               </View>
             </View>
-            <Pressable style={styles.menuRow}>
+            <Pressable
+              style={styles.menuRow}
+              onPress={() => Alert.alert("Add Payment", "Payment method management coming soon.")}
+            >
               <View style={styles.menuIcon}>
                 <Plus size={22} color="#888888" strokeWidth={2} />
               </View>
