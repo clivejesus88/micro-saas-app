@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import Animated, {
+  SharedValue,
   useAnimatedStyle,
   useAnimatedScrollHandler,
   useSharedValue,
@@ -106,7 +107,7 @@ function Slide({
 }: {
   item: OnboardingSlide;
   index: number;
-  scrollX: Animated.SharedValue<number>;
+  scrollX: SharedValue<number>;
   containerWidth: number;
   imageHeight: number;
   isActive: boolean;
