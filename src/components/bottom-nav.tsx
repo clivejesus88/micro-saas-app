@@ -65,7 +65,7 @@ export function BottomNav() {
         <View
           style={[styles.containerInner, { paddingBottom: insets.bottom + 8 }]}
         >
-          <BlurView intensity={100} tint="dark" style={styles.blur}>
+          <BlurView intensity={100} tint="light" style={styles.blur}>
             <View style={styles.navBar}>
               {TABS.map((tab) => {
                 const Icon = tab.icon;
@@ -83,14 +83,15 @@ export function BottomNav() {
                     <View style={[styles.iconWrap, isActive && styles.iconWrapActive]}>
                       <Icon
                         size={22}
-                        color={isActive ? "#FFFFFF" : "#8E8E93"}
+                        color={isActive ? "#FFFFFF" : "rgba(255,255,255,0.45)"}
                         strokeWidth={isActive ? 2.2 : 1.8}
                       />
                     </View>
                     <Text
                       style={[
                         styles.tabLabel,
-                        { color: isActive ? "#FFFFFF" : "#8E8E93" },
+                        { color: isActive ? "#FFFFFF" : "rgba(255,255,255,0.45)" },
+                        isActive && { fontWeight: "600" },
                       ]}
                     >
                       {tab.label}
@@ -122,16 +123,16 @@ const styles = StyleSheet.create({
   },
   containerInner: {
     width: "100%",
-    backgroundColor: "rgba(0,0,0,0.12)",
+    backgroundColor: "rgba(255,255,255,0.06)",
     borderRadius: 28,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
     elevation: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.18)",
+    borderColor: "rgba(255,255,255,0.25)",
   },
   blur: {
     borderRadius: 28,
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   iconWrapActive: {
-    backgroundColor: "rgba(74,122,40,0.25)",
+    backgroundColor: "transparent",
   },
   tabLabel: {
     ...TypeScale.captionXs,
