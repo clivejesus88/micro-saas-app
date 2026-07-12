@@ -331,6 +331,10 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     elevation: 2,
   },
+  notifCardUnread: {
+    borderColor: "rgba(74,122,40,0.15)",
+    backgroundColor: "#FAFDF7",
+  },
   notifIcon: {
     width: 44,
     height: 44,
