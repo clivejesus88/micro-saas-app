@@ -16,21 +16,20 @@ import Animated, {
   useSharedValue,
   withSpring,
   withTiming,
-  withDelay,
+
   interpolate,
   Extrapolation,
   Easing,
-  useDerivedValue,
-  useAnimatedReaction,
+
 } from "react-native-reanimated";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   ShieldCheck,
-  ScanLine,
   TrendingDown,
 } from "lucide-react-native";
 import { useResponsive } from "@/hooks/use-responsive";
@@ -356,24 +355,24 @@ function ScanDemo({ isActive }: { isActive: boolean }) {
       <Animated.View style={[styles.scanLine, scanLineStyle]} />
 
       <Animated.View style={[styles.scanBreakdownCard, cardStyle]}>
-        <View style={[styles.scanBreakdownRow, r1]}>
+        <Animated.View style={[styles.scanBreakdownRow, r1]}>
           <Text style={styles.scanBreakdownLabel}>Retail Price</Text>
           <Text style={styles.scanBreakdownValue}>{BREAKDOWN_ROWS[0].value}</Text>
-        </View>
+        </Animated.View>
         <View style={styles.scanBreakdownDivider} />
-        <View style={[styles.scanBreakdownRow, r2]}>
+        <Animated.View style={[styles.scanBreakdownRow, r2]}>
           <Text style={styles.scanBreakdownLabel}>Material Cost</Text>
           <Text style={[styles.scanBreakdownValue, { color: "#4A7A28" }]}>
             {BREAKDOWN_ROWS[1].value}
           </Text>
-        </View>
+        </Animated.View>
         <View style={styles.scanBreakdownDivider} />
-        <View style={[styles.scanBreakdownRow, r3]}>
+        <Animated.View style={[styles.scanBreakdownRow, r3]}>
           <Text style={styles.scanBreakdownLabel}>You'd Save</Text>
           <Text style={[styles.scanBreakdownValue, { color: "#FF6B1A" }]}>
             {BREAKDOWN_ROWS[2].value}
           </Text>
-        </View>
+        </Animated.View>
       </Animated.View>
     </View>
   );
@@ -597,8 +596,8 @@ export default function OnboardingScreen() {
     () => Math.min(screenWidth, MAX_WIDTH),
     [screenWidth]
   );
-  const imageHeight = useMemo(() => screenHeight * 0.56, [screenHeight]);
-  const bottomMinHeight = useMemo(() => screenHeight * 0.46, [screenHeight]);
+  const imageHeight = useMemo(() => screenHeight * 0.62, [screenHeight]);
+  const bottomMinHeight = useMemo(() => screenHeight * 0.40, [screenHeight]);
   const ctaWidth = useMemo(() => containerWidth - 48, [containerWidth]);
 
   const containerWidthSV = useSharedValue(containerWidth);
@@ -830,7 +829,9 @@ export default function OnboardingScreen() {
           style={[styles.skipButton, { top: insets.top + 14, right: 20 }]}
           onPress={() => router.replace("/login")}
         >
-          <Text style={styles.skipText}>Skip</Text>
+          <BlurView intensity={60} tint="dark" style={styles.skipBlur}>
+            <Text style={styles.skipText}>Skip</Text>
+          </BlurView>
         </Pressable>
 
         <AnimatedFlatList
@@ -987,20 +988,27 @@ const styles = StyleSheet.create({
   skipButton: {
     position: "absolute",
     zIndex: 30,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
     borderRadius: 16,
-    backgroundColor: "rgba(0,0,0,0.2)",
+    overflow: "hidden",
     borderWidth: 0.5,
-    borderColor: "rgba(255,255,255,0.15)",
+    borderColor: "rgba(255,255,255,0.2)",
+  },
+  skipBlur: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 16,
   },
   skipText: {
     ...TypeScale.captionLg,
     fontWeight: "500",
-    color: "rgba(255,255,255,0.85)",
+    color: "#FFFFFF",
     letterSpacing: 0.3,
   },
-  carousel: {},
+  carousel: {
+    overflow: "hidden",
+  },
   slideImage: {
     width: "100%",
     height: "100%",
