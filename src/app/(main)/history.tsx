@@ -688,7 +688,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "#000",
   },
   sheetContainer: {

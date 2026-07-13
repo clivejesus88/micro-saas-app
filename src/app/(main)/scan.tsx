@@ -341,6 +341,39 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  previewOverlay: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: "flex-end",
+    alignItems: "center",
+    paddingBottom: 24,
+    backgroundColor: "rgba(0,0,0,0.3)",
+  },
+  previewHint: {
+    ...TypeScale.bodyLg,
+    color: "#FFFFFF",
+    fontWeight: "600",
+    marginBottom: 16,
+  },
+  previewActions: {
+    flexDirection: "row",
+    gap: 24,
+  },
+  previewRejectBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(220,38,38,0.85)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  previewAcceptBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(74,122,40,0.85)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   clearButton: {
     position: "absolute",
     top: 12,
@@ -355,7 +388,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   analyzingOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
     gap: 12,

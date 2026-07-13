@@ -345,10 +345,21 @@ const styles = StyleSheet.create({
   notifContent: {
     flex: 1,
   },
+  notifTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   notifTitle: {
     ...TypeScale.bodyLg,
     fontWeight: "600",
     color: "#1A1A1A",
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#4A7A28",
   },
   notifDesc: {
     ...TypeScale.captionMd,
