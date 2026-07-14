@@ -63,9 +63,9 @@ export function BottomNav() {
     >
       <View style={styles.container}>
         <View
-          style={[styles.containerInner, { paddingBottom: insets.bottom + 8 }]}
+          style={[styles.containerInner, { paddingBottom: insets.bottom + 0 }]}
         >
-          <BlurView intensity={100} tint="light" style={styles.blur}>
+          <BlurView intensity={100} tint={"light"} style={styles.blur}>
             <View style={styles.navBar}>
               {TABS.map((tab) => {
                 const Icon = tab.icon;
@@ -83,14 +83,14 @@ export function BottomNav() {
                     <View style={[styles.iconWrap, isActive && styles.iconWrapActive]}>
                       <Icon
                         size={22}
-                        color={isActive ? "#1B4332" : "rgba(0,0,0,0.35)"}
+                        color={isActive ? "#037e4a" : "rgba(0,0,0,0.35)"}
                         strokeWidth={isActive ? 2.2 : 1.8}
                       />
                     </View>
                     <Text
                       style={[
                         styles.tabLabel,
-                        { color: isActive ? "#1B4332" : "rgba(0,0,0,0.35)" },
+                        { color: isActive ? "#037e4a" : "rgba(0,0,0,0.35)" },
                         isActive && { fontWeight: "600" },
                       ]}
                     >
@@ -110,7 +110,7 @@ export function BottomNav() {
 const styles = StyleSheet.create({
   wrapper: {
     position: "absolute",
-    bottom: 0,
+    bottom: 12,
     left: 0,
     right: 0,
     zIndex: 50,
@@ -123,19 +123,19 @@ const styles = StyleSheet.create({
   },
   containerInner: {
     width: "100%",
-    backgroundColor: "rgba(74,122,40,0.16)",
+    backgroundColor: "rgba(244, 247, 242, 0.16)",
     borderRadius: 28,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: "#3d3d3d",
+    shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.25,
     shadowRadius: 20,
-    elevation: 12,
+    elevation: 0,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "rgba(74,122,40,0.22)",
   },
   blur: {
-    borderRadius: 28,
+    borderRadius: 30,
     overflow: "hidden",
   },
   navBar: {
