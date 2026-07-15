@@ -133,7 +133,6 @@ export default function PaywallScreen() {
           <Pressable
             style={[
               styles.planCard,
-              styles.planCardBest,
               selectedPlan === "annual" && styles.planCardBestSelected,
             ]}
             onPress={() => setSelectedPlan("annual")}
@@ -144,7 +143,7 @@ export default function PaywallScreen() {
             <Text
               style={[
                 styles.planLabel,
-                styles.planLabelGreen,
+                selectedPlan === "annual" && styles.planLabelGreen,
               ]}
             >
               Annual
@@ -287,6 +286,7 @@ const styles = StyleSheet.create({
   },
   planCardBestSelected: {
     borderColor: "#4A7A28",
+    borderWidth: 2,
   },
   bestValueBadge: {
     position: "absolute",

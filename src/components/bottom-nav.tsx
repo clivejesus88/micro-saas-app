@@ -65,7 +65,7 @@ export function BottomNav() {
         <View
           style={[styles.containerInner, { paddingBottom: insets.bottom + 0 }]}
         >
-          <BlurView intensity={100} tint={"light"} style={styles.blur}>
+          <BlurView intensity={80} tint={"systemChromeMaterial"} style={styles.blur}>
             <View style={styles.navBar}>
               {TABS.map((tab) => {
                 const Icon = tab.icon;
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   },
   containerInner: {
     width: "100%",
-    backgroundColor: "rgba(244, 247, 242, 0.16)",
+    backgroundColor: "rgba(244, 247, 242, 0.08)",
     borderRadius: 28,
     overflow: "hidden",
     shadowColor: "#3d3d3d",

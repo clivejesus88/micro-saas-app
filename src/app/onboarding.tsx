@@ -527,10 +527,10 @@ function Slide({
   });
 
   return (
-    <View style={{ width: containerWidth, height: imageHeight }}>
+    <View style={{ width: containerWidth, height: imageHeight, overflow: "hidden" }}>
       <Animated.View
         style={[
-          { width: "122%", height: "100%", marginLeft: "-11%" },
+          { width: "122%", height: "110%", marginLeft: "-11%", marginTop: "-5%" },
           imageStyle,
         ]}
       >
