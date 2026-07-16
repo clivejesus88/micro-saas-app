@@ -1,9 +1,60 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 
 const STORAGE_KEY = "fringe_saved_ids";
-
 const INITIAL_SAVED_IDS = ["1", "2", "5"];
+
+function getStorage() {
+  if (Platform.OS === "web") {
+    return {
+      async get(key: string): Promise<string | null> {
+        try {
+          return localStorage.getItem(key);
+        } catch {
+          return null;
+        }
+      },
+      async set(key: string, value: string): Promise<void> {
+        try {
+          localStorage.setItem(key, value);
+        } catch {
+          // ignore
+        }
+      },
+    };
+  }
+
+  let cached: Record<string, string> = {};
+  return {
+    async get(key: string): Promise<string | null> {
+      try {
+        const FileSystem = require("expo-file-system");
+        const path = FileSystem.documentDirectory + key + ".json";
+        const info = await FileSystem.getInfoAsync(path);
+        if (info.exists) {
+          const raw = await FileSystem.readAsStringAsync(path);
+          cached[key] = raw;
+          return raw;
+        }
+      } catch {
+        // fall through
+      }
+      return cached[key] ?? null;
+    },
+    async set(key: string, value: string): Promise<void> {
+      cached[key] = value;
+      try {
+        const FileSystem = require("expo-file-system");
+        const path = FileSystem.documentDirectory + key + ".json";
+        await FileSystem.writeAsStringAsync(path, value);
+      } catch {
+        // ignore
+      }
+    },
+  };
+}
+
+const store = getStorage();
 
 interface SavedContextValue {
   savedIds: Set<string>;
@@ -18,7 +69,7 @@ export function SavedProvider({ children }: { children: React.ReactNode }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
+    store.get(STORAGE_KEY).then((raw) => {
       if (raw !== null) {
         try {
           const parsed: string[] = JSON.parse(raw);
@@ -33,7 +84,7 @@ export function SavedProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (loaded) {
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify([...savedIds]));
+      store.set(STORAGE_KEY, JSON.stringify([...savedIds]));
     }
   }, [savedIds, loaded]);
 

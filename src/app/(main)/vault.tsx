@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -42,6 +42,7 @@ export default function VaultScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { savedIds } = useSaved();
+  const [activeCategory, setActiveCategory] = useState("all");
   const {
     onScrollBeginDrag,
     onScrollEndDrag,
@@ -53,12 +54,21 @@ export default function VaultScreen() {
     return ALL_SCANS.filter((scan) => savedIds.has(scan.id)).map((scan) => ({
       id: scan.id,
       name: scan.name,
+      category: scan.category,
       originalPrice: scan.retailPrice,
       price: scan.retailPrice - scan.savings,
       imageUrl: scan.image,
       markup: parseInt(scan.markup.replace("%", ""), 10),
     }));
   }, [savedIds]);
+
+  const filteredItems = useMemo(() => {
+    if (activeCategory === "all") return savedItems;
+    const label = CATEGORIES.find((c) => c.id === activeCategory)?.label;
+    return savedItems.filter(
+      (item) => item.category.toLowerCase() === activeCategory || item.category === label,
+    );
+  }, [savedItems, activeCategory]);
 
   const totalSaved = useMemo(() => {
     return savedItems.reduce((sum, item) => sum + (item.originalPrice - item.price), 0);

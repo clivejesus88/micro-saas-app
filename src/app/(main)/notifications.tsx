@@ -16,6 +16,7 @@ import {
   Tag,
   Clock,
   CheckCheck,
+  X,
 } from "lucide-react-native";
 import { MAX_WIDTH, BOTTOM_NAV_HEIGHT } from "@/constants/layout";
 import { useScrollContext } from "@/contexts/scroll-context";
@@ -30,63 +31,6 @@ interface Notification {
   description: string;
   timeAgo: string;
 }
-
-const NOTIFICATIONS: Notification[] = [
-  {
-    id: "1",
-    icon: TrendingDown,
-    iconBg: "#F0F6E8",
-    iconColor: "#4A7A28",
-    title: "Price Drop Alert",
-    description: "Air Jordan 1 Retro dropped 12% on StockX",
-    timeAgo: "2h ago",
-  },
-  {
-    id: "2",
-    icon: ScanLine,
-    iconBg: "#FFF0E6",
-    iconColor: "#FF6B1A",
-    title: "Scan Complete",
-    description: "Your analysis of Gucci GG Canvas Tote is ready",
-    timeAgo: "5h ago",
-  },
-  {
-    id: "3",
-    icon: Tag,
-    iconBg: "#F0F6E8",
-    iconColor: "#4A7A28",
-    title: "New Markup Found",
-    description: "Dyson Airwrap has 274% markup detected",
-    timeAgo: "Yesterday",
-  },
-  {
-    id: "4",
-    icon: Bell,
-    iconBg: "#F5F5F5",
-    iconColor: "#888888",
-    title: "Saved Item Update",
-    description: "Levi's 501 Jeans is now in stock at your saved price",
-    timeAgo: "2 days ago",
-  },
-  {
-    id: "5",
-    icon: ScanLine,
-    iconBg: "#FFF0E6",
-    iconColor: "#FF6B1A",
-    title: "Weekly Summary",
-    description: "You saved $840 this week across 6 scans",
-    timeAgo: "3 days ago",
-  },
-  {
-    id: "6",
-    icon: TrendingDown,
-    iconBg: "#F0F6E8",
-    iconColor: "#4A7A28",
-    title: "Price Drop Alert",
-    description: "Ray-Ban Aviators dropped 8% on Amazon",
-    timeAgo: "5 days ago",
-  },
-];
 
 interface NotificationItem extends Notification {
   isRead: boolean;
@@ -191,6 +135,10 @@ export default function NotificationsScreen() {
     }
   };
 
+  const deleteNotification = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
   return (
     <View style={styles.root}>
       <ScrollView
@@ -227,35 +175,51 @@ export default function NotificationsScreen() {
 
         {/* Notification List */}
         <View style={styles.notifList}>
-          {notifications.map((notif) => {
-            const Icon = notif.icon;
-            return (
-              <Pressable
-                key={notif.id}
-                style={({ pressed }) => [
-                  styles.notifCard,
-                  pressed && { opacity: 0.92 },
-                  !notif.isRead && styles.notifCardUnread,
-                ]}
-                onPress={() => handleNotifPress(notif)}
-              >
-                <View style={[styles.notifIcon, { backgroundColor: notif.iconBg }]}>
-                  <Icon size={20} color={notif.iconColor} strokeWidth={2} />
-                </View>
-                <View style={styles.notifContent}>
-                  <View style={styles.notifTitleRow}>
-                    <Text style={styles.notifTitle}>{notif.title}</Text>
-                    {!notif.isRead && <View style={styles.unreadDot} />}
+          {notifications.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>No notifications</Text>
+              <Text style={styles.emptyDesc}>
+                You&apos;re all caught up!
+              </Text>
+            </View>
+          ) : (
+            notifications.map((notif) => {
+              const Icon = notif.icon;
+              return (
+                <Pressable
+                  key={notif.id}
+                  style={({ pressed }) => [
+                    styles.notifCard,
+                    pressed && { opacity: 0.92 },
+                    !notif.isRead && styles.notifCardUnread,
+                  ]}
+                  onPress={() => handleNotifPress(notif)}
+                >
+                  <View style={[styles.notifIcon, { backgroundColor: notif.iconBg }]}>
+                    <Icon size={20} color={notif.iconColor} strokeWidth={2} />
                   </View>
-                  <Text style={styles.notifDesc}>{notif.description}</Text>
-                  <View style={styles.notifTimeRow}>
-                    <Clock size={12} color="#AAAAAA" strokeWidth={2} />
-                    <Text style={styles.notifTime}>{notif.timeAgo}</Text>
+                  <View style={styles.notifContent}>
+                    <View style={styles.notifTitleRow}>
+                      <Text style={styles.notifTitle}>{notif.title}</Text>
+                      {!notif.isRead && <View style={styles.unreadDot} />}
+                    </View>
+                    <Text style={styles.notifDesc}>{notif.description}</Text>
+                    <View style={styles.notifTimeRow}>
+                      <Clock size={12} color="#AAAAAA" strokeWidth={2} />
+                      <Text style={styles.notifTime}>{notif.timeAgo}</Text>
+                    </View>
                   </View>
-                </View>
-              </Pressable>
-            );
-          })}
+                  <Pressable
+                    style={styles.deleteButton}
+                    hitSlop={8}
+                    onPress={() => deleteNotification(notif.id)}
+                  >
+                    <X size={16} color="#CCCCCC" strokeWidth={2} />
+                  </Pressable>
+                </Pressable>
+              );
+            })
+          )}
         </View>
       </ScrollView>
     </View>
@@ -377,5 +341,30 @@ const styles = StyleSheet.create({
     ...TypeScale.captionSm,
     fontWeight: "400",
     color: "#AAAAAA",
+  },
+  deleteButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#F5F5F5",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "flex-start",
+    marginTop: 2,
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 48,
+    gap: 8,
+  },
+  emptyTitle: {
+    ...TypeScale.bodyLg,
+    fontWeight: "600",
+    color: "#1A1A1A",
+  },
+  emptyDesc: {
+    ...TypeScale.mutedSm,
+    color: "#AAAAAA",
+    textAlign: "center",
   },
 });
