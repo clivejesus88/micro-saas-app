@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   Pressable,
   ScrollView,
@@ -16,60 +17,14 @@ import {
 } from "lucide-react-native";
 import { MAX_WIDTH, BOTTOM_NAV_HEIGHT } from "@/constants/layout";
 import { useScrollContext } from "@/contexts/scroll-context";
+import { useSaved } from "@/contexts/saved-context";
+import { ALL_SCANS } from "@/constants/scans-data";
 import { TypeScale } from "@/constants/typography";
-
-interface SavedItem {
-  id: string;
-  name: string;
-  originalPrice: number;
-  price: number;
-  imageUrl: string;
-  markup: number;
-}
 
 interface Category {
   id: string;
   label: string;
 }
-
-const SAVED_ITEMS: SavedItem[] = [
-  {
-    id: "limited-run-designer-sneaker",
-    name: "Limited-Run Designer Sneaker",
-    originalPrice: 1180,
-    price: 420,
-    imageUrl:
-      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=900&auto=format&fit=crop",
-    markup: 380,
-  },
-  {
-    id: "structured-leather-handbag",
-    name: "Structured Leather Handbag",
-    originalPrice: 4600,
-    price: 1380,
-    imageUrl:
-      "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?q=80&w=900&auto=format&fit=crop",
-    markup: 520,
-  },
-  {
-    id: "titanium-smartwatch",
-    name: "Titanium Smartwatch",
-    originalPrice: 890,
-    price: 345,
-    imageUrl:
-      "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=900&auto=format&fit=crop",
-    markup: 290,
-  },
-  {
-    id: "technical-shell-jacket",
-    name: "Technical Shell Jacket",
-    originalPrice: 1650,
-    price: 590,
-    imageUrl:
-      "https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=900&auto=format&fit=crop",
-    markup: 440,
-  },
-];
 
 const CATEGORIES: Category[] = [
   { id: "all", label: "All Items" },
@@ -86,12 +41,28 @@ const PROGRESS = Math.min(TOTAL_SAVED / SAVINGS_GOAL, 1);
 export default function VaultScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { savedIds } = useSaved();
   const {
     onScrollBeginDrag,
     onScrollEndDrag,
     onMomentumScrollBegin,
     onMomentumScrollEnd,
   } = useScrollContext();
+
+  const savedItems = useMemo(() => {
+    return ALL_SCANS.filter((scan) => savedIds.has(scan.id)).map((scan) => ({
+      id: scan.id,
+      name: scan.name,
+      originalPrice: scan.retailPrice,
+      price: scan.retailPrice - scan.savings,
+      imageUrl: scan.image,
+      markup: parseInt(scan.markup.replace("%", ""), 10),
+    }));
+  }, [savedIds]);
+
+  const totalSaved = useMemo(() => {
+    return savedItems.reduce((sum, item) => sum + (item.originalPrice - item.price), 0);
+  }, [savedItems]);
 
   const bottomSpacer = BOTTOM_NAV_HEIGHT + insets.bottom + 20;
 
@@ -119,7 +90,7 @@ export default function VaultScreen() {
           </View>
 
           <Text style={styles.totalLabel}>Total Saved</Text>
-          <Text style={styles.totalAmount}>${TOTAL_SAVED.toLocaleString()}</Text>
+          <Text style={styles.totalAmount}>${(totalSaved || TOTAL_SAVED).toLocaleString()}</Text>
 
           <View style={styles.progressTrack}>
             <View
@@ -182,39 +153,48 @@ export default function VaultScreen() {
           <View style={styles.savedHeader}>
             <Text style={styles.savedTitle}>Saved Items</Text>
             <View style={styles.countBadge}>
-              <Text style={styles.countText}>{SAVED_ITEMS.length * 3}</Text>
+              <Text style={styles.countText}>{savedItems.length}</Text>
             </View>
           </View>
 
-          <View style={styles.itemsGrid}>
-            {SAVED_ITEMS.map((item) => (
-              <Pressable key={item.id} style={({ pressed }) => [styles.card, pressed && { opacity: 0.92 }]} onPress={() => router.push({ pathname: "/analysis", params: { productId: item.id } })}>
-                <View style={styles.cardImageWrapper}>
-                  <Image
-                    source={item.imageUrl}
-                    style={styles.cardImage}
-                    contentFit="cover"
-                  />
-                  <View style={styles.markupBadge}>
-                    <Text style={styles.markupBadgeText}>
-                      {item.markup}%
+          {savedItems.length === 0 ? (
+            <View style={styles.emptyVault}>
+              <Text style={styles.emptyTitle}>No saved items yet</Text>
+              <Text style={styles.emptyDesc}>
+                Bookmark items from your scans to save them here
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.itemsGrid}>
+              {savedItems.map((item) => (
+                <Pressable key={item.id} style={({ pressed }) => [styles.card, pressed && { opacity: 0.92 }]} onPress={() => router.push({ pathname: "/analysis", params: { productId: item.id } })}>
+                  <View style={styles.cardImageWrapper}>
+                    <Image
+                      source={item.imageUrl}
+                      style={styles.cardImage}
+                      contentFit="cover"
+                    />
+                    <View style={styles.markupBadge}>
+                      <Text style={styles.markupBadgeText}>
+                        {item.markup}%
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.cardBody}>
+                    <Text style={styles.cardName} numberOfLines={2}>
+                      {item.name}
+                    </Text>
+                    <Text style={styles.cardOriginalPrice}>
+                      ${item.originalPrice.toLocaleString()}
+                    </Text>
+                    <Text style={styles.cardPrice}>
+                      ${item.price.toLocaleString()}
                     </Text>
                   </View>
-                </View>
-                <View style={styles.cardBody}>
-                  <Text style={styles.cardName} numberOfLines={2}>
-                    {item.name}
-                  </Text>
-                  <Text style={styles.cardOriginalPrice}>
-                    ${item.originalPrice.toLocaleString()}
-                  </Text>
-                  <Text style={styles.cardPrice}>
-                    ${item.price.toLocaleString()}
-                  </Text>
-                </View>
-              </Pressable>
-            ))}
-          </View>
+                </Pressable>
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -388,6 +368,21 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 14,
     marginTop: 16,
+  },
+  emptyVault: {
+    alignItems: "center",
+    paddingVertical: 40,
+    gap: 8,
+  },
+  emptyTitle: {
+    ...TypeScale.bodyLg,
+    fontWeight: "600",
+    color: "#1A1A1A",
+  },
+  emptyDesc: {
+    ...TypeScale.mutedSm,
+    color: "#AAAAAA",
+    textAlign: "center",
   },
 
   // Card

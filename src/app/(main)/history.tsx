@@ -27,6 +27,7 @@ import {
 } from "lucide-react-native";
 import { MAX_WIDTH, BOTTOM_NAV_HEIGHT } from "@/constants/layout";
 import { useScrollContext } from "@/contexts/scroll-context";
+import { useSaved } from "@/contexts/saved-context";
 import { TypeScale } from "@/constants/typography";
 
 interface StatItem {
@@ -147,6 +148,7 @@ const SCANS_DATA: ScanItem[] = [
 export default function HistoryScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { isSaved, toggleSave } = useSaved();
   const [activeFilter, setActiveFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -324,12 +326,12 @@ export default function HistoryScreen() {
                   <Text style={styles.markupBadgeText}>{scan.markup}</Text>
                 </View>
                 <Text style={styles.scanTime}>{scan.timeAgo}</Text>
-                <Pressable style={styles.bookmarkButton} hitSlop={8}>
+                <Pressable style={styles.bookmarkButton} hitSlop={8} onPress={() => toggleSave(scan.id)}>
                   <Bookmark
                     size={16}
-                    color={scan.isSaved ? "#4A7A28" : "#C4C4C4"}
+                    color={isSaved(scan.id) ? "#4A7A28" : "#C4C4C4"}
                     strokeWidth={2}
-                    fill={scan.isSaved ? "#4A7A28" : "transparent"}
+                    fill={isSaved(scan.id) ? "#4A7A28" : "transparent"}
                   />
                 </Pressable>
               </View>

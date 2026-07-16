@@ -8,10 +8,11 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { BlurView } from "expo-blur";
 import {
   ArrowUpRight,
+  Bookmark,
   ChevronLeft,
   Copy,
   Globe,
@@ -23,6 +24,7 @@ import {
 } from "lucide-react-native";
 import { MAX_WIDTH, BOTTOM_NAV_HEIGHT } from "@/constants/layout";
 import { useScrollContext } from "@/contexts/scroll-context";
+import { useSaved } from "@/contexts/saved-context";
 import { TypeScale } from "@/constants/typography";
 
 interface MaterialRow {
@@ -159,6 +161,8 @@ function MaterialIcon({
 export default function AnalysisScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { productId } = useLocalSearchParams<{ productId?: string }>();
+  const { isSaved, toggleSave } = useSaved();
   const {
     onScrollBeginDrag,
     onScrollEndDrag,
@@ -168,6 +172,8 @@ export default function AnalysisScreen() {
 
   const bottomSpacer = BOTTOM_NAV_HEIGHT + insets.bottom + 100;
   const [copied, setCopied] = useState(false);
+  const savedId = productId ?? "analysis-hero";
+  const saved = isSaved(savedId);
 
   const handleCopy = () => {
     setCopied(true);
@@ -185,9 +191,19 @@ export default function AnalysisScreen() {
           <ChevronLeft size={24} color="#1A1A1A" strokeWidth={2} />
         </Pressable>
         <Text style={styles.headerTitle}>Analysis</Text>
-        <Pressable style={styles.backButton} hitSlop={8}>
-          <Share2 size={21} color="#1A1A1A" strokeWidth={2.25} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable style={styles.headerButton} hitSlop={8} onPress={() => toggleSave(savedId)}>
+            <Bookmark
+              size={21}
+              color={saved ? "#4A7A28" : "#1A1A1A"}
+              strokeWidth={2.25}
+              fill={saved ? "#4A7A28" : "transparent"}
+            />
+          </Pressable>
+          <Pressable style={styles.headerButton} hitSlop={8}>
+            <Share2 size={21} color="#1A1A1A" strokeWidth={2.25} />
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView
@@ -404,6 +420,18 @@ const styles = StyleSheet.create({
     borderBottomColor: "#F5F5F5",
   },
   backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F5F5F5",
+  },
+  headerActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  headerButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
