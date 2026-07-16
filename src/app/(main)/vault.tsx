@@ -137,19 +137,20 @@ export default function VaultScreen() {
           style={styles.categoryScroll}
           contentContainerStyle={styles.categoryContent}
         >
-          {CATEGORIES.map((cat, index) => (
+          {CATEGORIES.map((cat) => (
             <Pressable
               key={cat.id}
               style={({ pressed }) => [
                 styles.categoryPill,
-                index === 0 && styles.categoryPillActive,
+                activeCategory === cat.id && styles.categoryPillActive,
                 pressed && { opacity: 0.7 },
               ]}
+              onPress={() => setActiveCategory(cat.id)}
             >
               <Text
                 style={[
                   styles.categoryText,
-                  index === 0 && styles.categoryTextActive,
+                  activeCategory === cat.id && styles.categoryTextActive,
                 ]}
               >
                 {cat.label}
@@ -163,11 +164,11 @@ export default function VaultScreen() {
           <View style={styles.savedHeader}>
             <Text style={styles.savedTitle}>Saved Items</Text>
             <View style={styles.countBadge}>
-              <Text style={styles.countText}>{savedItems.length}</Text>
+              <Text style={styles.countText}>{filteredItems.length}</Text>
             </View>
           </View>
 
-          {savedItems.length === 0 ? (
+          {filteredItems.length === 0 ? (
             <View style={styles.emptyVault}>
               <Text style={styles.emptyTitle}>No saved items yet</Text>
               <Text style={styles.emptyDesc}>
@@ -176,7 +177,7 @@ export default function VaultScreen() {
             </View>
           ) : (
             <View style={styles.itemsGrid}>
-              {savedItems.map((item) => (
+              {filteredItems.map((item) => (
                 <Pressable key={item.id} style={({ pressed }) => [styles.card, pressed && { opacity: 0.92 }]} onPress={() => router.push({ pathname: "/analysis", params: { productId: item.id } })}>
                   <View style={styles.cardImageWrapper}>
                     <Image
