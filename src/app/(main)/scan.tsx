@@ -1,237 +1,528 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   ActivityIndicator,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import { Image } from "expo-image";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withRepeat,
+  withSequence,
+  Easing,
+  interpolate,
+  cancelAnimation,
+  runOnJS,
+} from "react-native-reanimated";
 import {
   ArrowLeft,
-  Camera,
-  Check,
-  Image as ImageIcon,
-  X,
-  Sparkles,
+  Zap,
+  ZapOff,
+  ImageIcon,
+  Lock,
+  Unlock,
+  Layers,
 } from "lucide-react-native";
-import { MAX_WIDTH } from "@/constants/layout";
 import { TypeScale } from "@/constants/typography";
 
-type ScanState = "idle" | "preview" | "analyzing";
+type ScanState = "idle" | "detected" | "analyzing";
+
+interface DetectedProduct {
+  id: string;
+  name: string;
+  category: string;
+  image: string;
+  salesRank: number;
+  isGated: boolean;
+  retailPrice: number;
+}
+
+const MOCK_PRODUCTS: DetectedProduct[] = [
+  {
+    id: "1",
+    name: "Air Jordan 1 Retro High OG",
+    category: "Sneakers",
+    image:
+      "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&q=80&w=200&h=200",
+    salesRank: 342,
+    isGated: false,
+    retailPrice: 180,
+  },
+  {
+    id: "2",
+    name: "Gucci GG Canvas Tote",
+    category: "Bags",
+    image:
+      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&q=80&w=200&h=200",
+    salesRank: 87,
+    isGated: true,
+    retailPrice: 1200,
+  },
+  {
+    id: "3",
+    name: "Dyson Airwrap Complete",
+    category: "Electronics",
+    image:
+      "https://images.unsplash.com/photo-1522338242992-e1a54906a8da?auto=format&fit=crop&q=80&w=200&h=200",
+    salesRank: 1203,
+    isGated: false,
+    retailPrice: 599,
+  },
+  {
+    id: "4",
+    name: "Levi's 501 Original Fit",
+    category: "Fashion",
+    image:
+      "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=200&h=200",
+    salesRank: 2156,
+    isGated: false,
+    retailPrice: 89,
+  },
+  {
+    id: "5",
+    name: "Le Creuset Dutch Oven 5.5qt",
+    category: "Home",
+    image:
+      "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&q=80&w=200&h=200",
+    salesRank: 567,
+    isGated: true,
+    retailPrice: 420,
+  },
+  {
+    id: "6",
+    name: "Ray-Ban Aviator Classic",
+    category: "Accessories",
+    image:
+      "https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&q=80&w=200&h=200",
+    salesRank: 934,
+    isGated: false,
+    retailPrice: 210,
+  },
+];
 
 export default function ScanScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const [permission, requestPermission] = useCameraPermissions();
+  const cameraRef = useRef<CameraView>(null);
 
   const [scanState, setScanState] = useState<ScanState>("idle");
-  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [torchOn, setTorchOn] = useState(false);
+  const [batchMode, setBatchMode] = useState(false);
+  const [detectedProduct, setDetectedProduct] =
+    useState<DetectedProduct | null>(null);
+  const [scannedCount, setScannedCount] = useState(0);
+  const [lastScannedBarcode, setLastScannedBarcode] = useState<string | null>(
+    null,
+  );
 
-  const pickImage = useCallback(async (useCamera: boolean) => {
+  const scanLineY = useSharedValue(0);
+  const scanLineActive = useSharedValue(0);
+  const cardTranslateY = useSharedValue(120);
+  const cardOpacity = useSharedValue(0);
+  const cornerScale = useSharedValue(1);
+  const pulseOpacity = useSharedValue(0.3);
+
+  useEffect(() => {
+    if (scanState === "idle") {
+      scanLineActive.value = 1;
+      scanLineY.value = 0;
+      scanLineY.value = withRepeat(
+        withSequence(
+          withTiming(1, {
+            duration: 1600,
+            easing: Easing.inOut(Easing.cubic),
+          }),
+          withTiming(0, { duration: 0 }),
+        ),
+        -1,
+        false,
+      );
+    } else {
+      scanLineActive.value = 0;
+      cancelAnimation(scanLineY);
+    }
+
+    return () => {
+      cancelAnimation(scanLineY);
+    };
+  }, [scanState]);
+
+  useEffect(() => {
+    if (scanState === "detected") {
+      cardTranslateY.value = withSpring(0, {
+        damping: 15,
+        stiffness: 140,
+        mass: 0.7,
+      });
+      cardOpacity.value = withTiming(1, { duration: 250 });
+      cornerScale.value = withSpring(1.08, {
+        damping: 8,
+        stiffness: 200,
+      });
+      pulseOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.8, { duration: 600 }),
+          withTiming(0.3, { duration: 600 }),
+        ),
+        -1,
+        false,
+      );
+    } else {
+      cardTranslateY.value = withTiming(120, { duration: 200 });
+      cardOpacity.value = withTiming(0, { duration: 150 });
+      cornerScale.value = withTiming(1, { duration: 200 });
+      cancelAnimation(pulseOpacity);
+      pulseOpacity.value = 0.3;
+    }
+
+    return () => {
+      cancelAnimation(cardTranslateY);
+      cancelAnimation(cardOpacity);
+      cancelAnimation(cornerScale);
+      cancelAnimation(pulseOpacity);
+    };
+  }, [scanState]);
+
+  const scanLineStyle = useAnimatedStyle(() => ({
+    top: `${interpolate(scanLineY.value, [0, 1], [8, 92])}%`,
+    opacity: scanLineActive.value,
+  }));
+
+  const cornersStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cornerScale.value }],
+  }));
+
+  const cardStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: `${cardTranslateY.value}%` }],
+    opacity: cardOpacity.value,
+  }));
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    opacity: pulseOpacity.value,
+  }));
+
+  const handleBarcodeScanned = useCallback(
+    (scanningResult: { type: string; data: string }) => {
+      if (scanState !== "idle") return;
+      if (scanningResult.data === lastScannedBarcode) return;
+
+      setLastScannedBarcode(scanningResult.data);
+      const product =
+        MOCK_PRODUCTS[Math.floor(Math.random() * MOCK_PRODUCTS.length)];
+      setDetectedProduct(product);
+      setScanState("detected");
+    },
+    [scanState, lastScannedBarcode],
+  );
+
+  const handleCardTap = useCallback(() => {
+    if (!detectedProduct) return;
+    setScanState("analyzing");
+    setScannedCount((c) => c + 1);
+    setTimeout(() => {
+      if (batchMode) {
+        setDetectedProduct(null);
+        setLastScannedBarcode(null);
+        setScanState("idle");
+      } else {
+        setScanState("idle");
+        setDetectedProduct(null);
+        setLastScannedBarcode(null);
+        router.push("/analysis");
+      }
+    }, 1800);
+  }, [detectedProduct, batchMode, router]);
+
+  const handleDismissCard = useCallback(() => {
+    setDetectedProduct(null);
+    setLastScannedBarcode(null);
+    setScanState("idle");
+  }, []);
+
+  const toggleTorch = useCallback(() => {
+    setTorchOn((prev) => !prev);
+  }, []);
+
+  const toggleBatch = useCallback(() => {
+    setBatchMode((prev) => !prev);
+  }, []);
+
+  const pickFromGallery = useCallback(async () => {
     try {
-      const launcher = useCamera
-        ? ImagePicker.launchCameraAsync
-        : ImagePicker.launchImageLibraryAsync;
-
-      const result = await launcher({
+      const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
         allowsEditing: false,
         quality: 0.85,
       });
 
       if (!result.canceled && result.assets[0]) {
-        setImageUri(result.assets[0].uri);
-        setScanState("preview");
+        setScanState("analyzing");
+        setTimeout(() => {
+          setScanState("idle");
+          router.push("/analysis");
+        }, 2000);
       }
     } catch {
       setScanState("idle");
     }
-  }, []);
-
-  const handleAnalyze = useCallback(() => {
-    setScanState("analyzing");
-    setTimeout(() => {
-      setScanState("idle");
-      setImageUri(null);
-      router.push("/analysis");
-    }, 2200);
   }, [router]);
 
-  const handleClear = useCallback(() => {
-    setImageUri(null);
-    setScanState("idle");
-  }, []);
+  const handleBack = useCallback(() => {
+    if (scanState === "detected") {
+      handleDismissCard();
+      return;
+    }
+    if (router.canGoBack()) router.back();
+    else router.replace("/home");
+  }, [scanState, handleDismissCard, router]);
+
+  if (!permission) {
+    return <View style={styles.root} />;
+  }
+
+  if (!permission.granted) {
+    return (
+      <View style={styles.permissionContainer}>
+        <View style={[styles.permissionInner, { paddingTop: insets.top + 40 }]}>
+          <View style={styles.permissionIconWrap}>
+            <CameraViewIcon />
+          </View>
+          <Text style={styles.permissionTitle}>Camera Access Required</Text>
+          <Text style={styles.permissionDesc}>
+            Fringe needs your camera to scan barcodes and analyze product prices
+            in real time.
+          </Text>
+          <Pressable
+            style={({ pressed }) => [
+              styles.permissionButton,
+              pressed && { opacity: 0.88 },
+            ]}
+            onPress={requestPermission}
+          >
+            <Text style={styles.permissionButtonText}>Enable Camera</Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.permissionGalleryBtn,
+              pressed && { opacity: 0.6 },
+            ]}
+            onPress={pickFromGallery}
+          >
+            <ImageIcon size={16} color="#FF6B1A" strokeWidth={2} />
+            <Text style={styles.permissionGalleryText}>Upload from gallery</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => {
-            if (scanState !== "idle") {
-              handleClear();
-              return;
-            }
-            if (router.canGoBack()) router.back();
-            else router.replace("/home");
-          }}
-          hitSlop={8}
-        >
-          <ArrowLeft size={22} color="#1A1A1A" strokeWidth={2} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Scan Item</Text>
-        <View style={styles.backButton} />
-      </View>
+      <CameraView
+        ref={cameraRef}
+        style={StyleSheet.absoluteFill}
+        facing="back"
+        enableTorch={torchOn}
+        barcodeScannerSettings={{
+          barcodeTypes: [
+            "ean13",
+            "ean8",
+            "upc_a",
+            "upc_e",
+            "code128",
+            "code39",
+            "code93",
+            "itf14",
+            "qr",
+          ],
+        }}
+        onBarcodeScanned={scanState === "idle" ? handleBarcodeScanned : undefined}
+      />
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 100 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.viewfinderWrapper}>
-          <View style={styles.viewfinder}>
-            {scanState === "idle" && (
-              <>
-                <View style={[styles.corner, styles.cornerTL]} />
-                <View style={[styles.corner, styles.cornerTR]} />
-                <View style={[styles.corner, styles.cornerBL]} />
-                <View style={[styles.corner, styles.cornerBR]} />
-                <View style={styles.viewfinderContent}>
-                  <Camera size={48} color="#CCCCCC" strokeWidth={1.6} />
-                  <Text style={styles.viewfinderPrimary}>
-                    Point at any product
-                  </Text>
-                  <Text style={styles.viewfinderSecondary}>
-                    Sneakers, bags, electronics, home goods — anything.
-                  </Text>
-                </View>
-              </>
-            )}
-
-            {scanState === "preview" && imageUri && (
-              <>
-                <Image
-                  source={{ uri: imageUri }}
-                  style={styles.previewImage}
-                  contentFit="cover"
-                />
-                <View style={styles.previewOverlay}>
-                  <Text style={styles.previewHint}>Is this the right image?</Text>
-                  <View style={styles.previewActions}>
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.previewRejectBtn,
-                        pressed && { opacity: 0.8 },
-                      ]}
-                      onPress={handleClear}
-                    >
-                      <X size={24} color="#FFFFFF" strokeWidth={2.5} />
-                    </Pressable>
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.previewAcceptBtn,
-                        pressed && { opacity: 0.8 },
-                      ]}
-                      onPress={handleAnalyze}
-                    >
-                      <Check size={24} color="#FFFFFF" strokeWidth={2.5} />
-                    </Pressable>
-                  </View>
-                </View>
-              </>
-            )}
-
-            {scanState === "analyzing" && (
-              <>
-                {imageUri && (
-                  <Image
-                    source={{ uri: imageUri }}
-                    style={[styles.previewImage, { opacity: 0.4 }]}
-                    contentFit="cover"
-                  />
-                )}
-                <View style={styles.analyzingOverlay}>
-                  <View style={styles.analyzingPill}>
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                    <Text style={styles.analyzingText}>Analyzing...</Text>
-                  </View>
-                  <Text style={styles.analyzingHint}>
-                    Scanning prices across 50+ retailers
-                  </Text>
-                </View>
-              </>
-            )}
-          </View>
+      <View style={styles.overlay}>
+        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+          <Pressable style={styles.headerBtn} onPress={handleBack} hitSlop={8}>
+            <ArrowLeft size={22} color="#FFFFFF" strokeWidth={2.2} />
+          </Pressable>
+          <Text style={styles.headerTitle}>Sourcing Engine</Text>
+          <Pressable
+            style={styles.headerBtn}
+            onPress={toggleTorch}
+            hitSlop={8}
+          >
+            <View style={styles.torchBtn}>
+              {torchOn ? (
+                <Zap size={20} color="#FFD60A" strokeWidth={2.2} />
+              ) : (
+                <ZapOff size={20} color="#FFFFFF" strokeWidth={2.2} />
+              )}
+            </View>
+          </Pressable>
         </View>
 
-        {scanState === "idle" && (
-          <View style={styles.actions}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.scanButton,
-                pressed && { opacity: 0.88 },
-              ]}
-              onPress={() => pickImage(true)}
-            >
-              <Camera size={18} color="#FFFFFF" strokeWidth={2} />
-              <Text style={styles.scanButtonText}>Scan for Arbitrage</Text>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [
-                styles.uploadButton,
-                pressed && { opacity: 0.6 },
-              ]}
-              onPress={() => pickImage(false)}
-            >
-              <ImageIcon size={16} color="#FF6B1A" strokeWidth={2} />
-              <Text style={styles.uploadButtonText}>Upload from gallery</Text>
-            </Pressable>
-          </View>
-        )}
+        <View style={styles.viewfinderArea}>
+          <Animated.View style={[styles.boundingBox, cornersStyle]}>
+            <View style={[styles.corner, styles.cornerTL]} />
+            <View style={[styles.corner, styles.cornerTR]} />
+            <View style={[styles.corner, styles.cornerBL]} />
+            <View style={[styles.corner, styles.cornerBR]} />
+            <Animated.View style={[styles.scanLine, scanLineStyle]} />
+            <Animated.View style={[styles.pulseRing, pulseStyle]} />
+          </Animated.View>
 
-        {scanState === "preview" && (
-          <View style={styles.actions}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.scanButton,
-                pressed && { opacity: 0.88 },
-              ]}
-              onPress={handleAnalyze}
-            >
-              <Sparkles size={18} color="#FFFFFF" strokeWidth={2} />
-              <Text style={styles.scanButtonText}>Analyze Product</Text>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [
-                styles.uploadButton,
-                pressed && { opacity: 0.6 },
-              ]}
-              onPress={handleClear}
-            >
-              <Text style={styles.uploadButtonText}>Choose different photo</Text>
-            </Pressable>
-          </View>
-        )}
+          {scanState === "idle" && (
+            <Text style={styles.hintText}>Align barcode within the frame</Text>
+          )}
 
-        {scanState === "idle" && (
-          <View style={styles.recentSection}>
-            <Text style={styles.recentTitle}>Recent Scans</Text>
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>No scans yet</Text>
-              <Text style={styles.emptyDesc}>
-                Your recent scans will appear here
-              </Text>
+          {scanState === "analyzing" && (
+            <View style={styles.analyzingWrap}>
+              <View style={styles.analyzingPill}>
+                <ActivityIndicator size="small" color="#FFFFFF" />
+                <Text style={styles.analyzingText}>Analyzing...</Text>
+              </View>
             </View>
-          </View>
-        )}
-      </ScrollView>
+          )}
+        </View>
+
+        <View style={[styles.bottomArea, { paddingBottom: insets.bottom + 16 }]}>
+          {scanState === "idle" && (
+            <>
+              <Pressable
+                style={styles.batchToggle}
+                onPress={toggleBatch}
+              >
+                <Layers size={14} color={batchMode ? "#4AE88C" : "#AAAAAA"} strokeWidth={2} />
+                <Text
+                  style={[
+                    styles.batchLabel,
+                    batchMode && styles.batchLabelActive,
+                  ]}
+                >
+                  Batch Mode
+                </Text>
+                <View
+                  style={[
+                    styles.batchTrack,
+                    batchMode && styles.batchTrackActive,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.batchDot,
+                      batchMode && styles.batchDotActive,
+                    ]}
+                  />
+                </View>
+              </Pressable>
+
+              {batchMode && scannedCount > 0 && (
+                <Text style={styles.batchCount}>
+                  {scannedCount} item{scannedCount !== 1 ? "s" : ""} scanned
+                </Text>
+              )}
+
+              <Pressable
+                style={styles.galleryBtn}
+                onPress={pickFromGallery}
+              >
+                <ImageIcon size={18} color="#FFFFFF" strokeWidth={2} />
+              </Pressable>
+            </>
+          )}
+
+          {scanState === "detected" && detectedProduct && (
+            <Animated.View style={[styles.slideUpCard, cardStyle]}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.cardContent,
+                  pressed && { opacity: 0.85 },
+                ]}
+                onPress={handleCardTap}
+              >
+                <View style={styles.cardImageWrap}>
+                  <Animated.Image
+                    source={{ uri: detectedProduct.image }}
+                    style={styles.cardImage}
+                  />
+                </View>
+                <View style={styles.cardInfo}>
+                  <Text style={styles.cardCategory} numberOfLines={1}>
+                    {detectedProduct.category}
+                  </Text>
+                  <Text style={styles.cardTitle} numberOfLines={1}>
+                    {detectedProduct.name}
+                  </Text>
+                  <View style={styles.cardMeta}>
+                    <Text style={styles.cardRank}>
+                      Rank #{detectedProduct.salesRank.toLocaleString()}
+                    </Text>
+                    <View
+                      style={[
+                        styles.gatedBadge,
+                        detectedProduct.isGated
+                          ? styles.gatedBadgeRed
+                          : styles.gatedBadgeGreen,
+                      ]}
+                    >
+                      {detectedProduct.isGated ? (
+                        <Lock size={11} color="#FFFFFF" strokeWidth={2.5} />
+                      ) : (
+                        <Unlock size={11} color="#FFFFFF" strokeWidth={2.5} />
+                      )}
+                      <Text style={styles.gatedText}>
+                        {detectedProduct.isGated ? "Gated" : "Ungated"}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                <View style={styles.cardChevron}>
+                  <Text style={styles.chevronText}>›</Text>
+                </View>
+              </Pressable>
+              <Pressable
+                style={styles.cardDismiss}
+                onPress={handleDismissCard}
+                hitSlop={8}
+              >
+                <Text style={styles.cardDismissText}>Dismiss</Text>
+              </Pressable>
+            </Animated.View>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function CameraViewIcon() {
+  return (
+    <View style={{ width: 64, height: 64, alignItems: "center", justifyContent: "center" }}>
+      <View
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: 16,
+          borderWidth: 2,
+          borderColor: "#4AE88C",
+          borderStyle: "dashed",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <View style={{ position: "absolute", top: -1, left: -1, width: 14, height: 14, borderTopWidth: 3, borderLeftWidth: 3, borderColor: "#4AE88C", borderTopLeftRadius: 6 }} />
+        <View style={{ position: "absolute", top: -1, right: -1, width: 14, height: 14, borderTopWidth: 3, borderRightWidth: 3, borderColor: "#4AE88C", borderTopRightRadius: 6 }} />
+        <View style={{ position: "absolute", bottom: -1, left: -1, width: 14, height: 14, borderBottomWidth: 3, borderLeftWidth: 3, borderColor: "#4AE88C", borderBottomLeftRadius: 6 }} />
+        <View style={{ position: "absolute", bottom: -1, right: -1, width: 14, height: 14, borderBottomWidth: 3, borderRightWidth: 3, borderColor: "#4AE88C", borderBottomRightRadius: 6 }} />
+      </View>
     </View>
   );
 }
@@ -239,165 +530,125 @@ export default function ScanScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#000000",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: "space-between",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
     paddingBottom: 12,
-    backgroundColor: "rgba(255,255,255,0.95)",
-    borderBottomWidth: 1,
-    borderBottomColor: "#F5F5F5",
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  headerBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.35)",
   },
   headerTitle: {
     ...TypeScale.sectionLg,
     flex: 1,
     textAlign: "center",
-    color: "#1A1A1A",
+    color: "#FFFFFF",
   },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  viewfinderWrapper: {
-    maxWidth: MAX_WIDTH,
-    alignSelf: "center",
-    width: "100%",
-  },
-  viewfinder: {
-    aspectRatio: 1,
-    width: "100%",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: "#DDDDDD",
-    backgroundColor: "#F5F5F5",
+  torchBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
+    backgroundColor: "rgba(0,0,0,0.35)",
+  },
+  viewfinderArea: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  boundingBox: {
+    width: 260,
+    height: 260,
+    position: "relative",
   },
   corner: {
     position: "absolute",
-    width: 48,
-    height: 48,
+    width: 36,
+    height: 36,
   },
   cornerTL: {
-    top: 20,
-    left: 20,
+    top: 0,
+    left: 0,
     borderTopWidth: 3,
     borderLeftWidth: 3,
-    borderColor: "#4A7A28",
-    borderTopLeftRadius: 18,
+    borderColor: "#FFFFFF",
+    borderTopLeftRadius: 12,
   },
   cornerTR: {
-    top: 20,
-    right: 20,
+    top: 0,
+    right: 0,
     borderTopWidth: 3,
     borderRightWidth: 3,
-    borderColor: "#4A7A28",
-    borderTopRightRadius: 18,
+    borderColor: "#FFFFFF",
+    borderTopRightRadius: 12,
   },
   cornerBL: {
-    bottom: 20,
-    left: 20,
+    bottom: 0,
+    left: 0,
     borderBottomWidth: 3,
     borderLeftWidth: 3,
-    borderColor: "#4A7A28",
-    borderBottomLeftRadius: 18,
+    borderColor: "#FFFFFF",
+    borderBottomLeftRadius: 12,
   },
   cornerBR: {
-    bottom: 20,
-    right: 20,
+    bottom: 0,
+    right: 0,
     borderBottomWidth: 3,
     borderRightWidth: 3,
-    borderColor: "#4A7A28",
-    borderBottomRightRadius: 18,
+    borderColor: "#FFFFFF",
+    borderBottomRightRadius: 12,
   },
-  viewfinderContent: {
-    alignItems: "center",
-    gap: 6,
+  scanLine: {
+    position: "absolute",
+    left: "10%",
+    right: "10%",
+    height: 2,
+    backgroundColor: "#4AE88C",
+    borderRadius: 1,
+    shadowColor: "#4AE88C",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 10,
+    elevation: 8,
   },
-  viewfinderPrimary: {
-    ...TypeScale.muted,
-    color: "#AAAAAA",
+  pulseRing: {
+    position: "absolute",
+    top: -8,
+    left: -8,
+    right: -8,
+    bottom: -8,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: "#4AE88C",
   },
-  viewfinderSecondary: {
-    ...TypeScale.mutedSm,
-    color: "#BBBBBB",
+  hintText: {
+    ...TypeScale.captionLg,
+    color: "rgba(255,255,255,0.7)",
+    marginTop: 24,
     textAlign: "center",
   },
-  previewImage: {
-    width: "100%",
-    height: "100%",
-  },
-  previewOverlay: {
-    ...StyleSheet.absoluteFill,
-    justifyContent: "flex-end",
+  analyzingWrap: {
+    marginTop: 24,
     alignItems: "center",
-    paddingBottom: 24,
-    backgroundColor: "rgba(0,0,0,0.3)",
-  },
-  previewHint: {
-    ...TypeScale.bodyLg,
-    color: "#FFFFFF",
-    fontWeight: "600",
-    marginBottom: 16,
-  },
-  previewActions: {
-    flexDirection: "row",
-    gap: 24,
-  },
-  previewRejectBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "rgba(220,38,38,0.85)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  previewAcceptBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "rgba(74,122,40,0.85)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  clearButton: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-  },
-  clearButtonBg: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  analyzingOverlay: {
-    ...StyleSheet.absoluteFill,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
   },
   analyzingPill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "rgba(28,42,14,0.85)",
+    backgroundColor: "rgba(28,42,14,0.88)",
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 50,
@@ -407,66 +658,209 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "600",
   },
-  analyzingHint: {
-    ...TypeScale.mutedSm,
-    color: "rgba(255,255,255,0.7)",
+  bottomArea: {
+    alignItems: "center",
+    paddingHorizontal: 20,
+    gap: 12,
   },
-  actions: {
-    marginTop: 28,
-    gap: 16,
-    maxWidth: MAX_WIDTH,
-    alignSelf: "center",
-    width: "100%",
-  },
-  scanButton: {
+  batchToggle: {
     flexDirection: "row",
-    height: 56,
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 50,
-    backgroundColor: "#1C2A0E",
+  },
+  batchLabel: {
+    ...TypeScale.captionMd,
+    color: "#AAAAAA",
+    fontWeight: "500",
+  },
+  batchLabelActive: {
+    color: "#4AE88C",
+  },
+  batchTrack: {
+    width: 36,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    justifyContent: "center",
+    paddingHorizontal: 2,
+  },
+  batchTrackActive: {
+    backgroundColor: "#4AE88C",
+  },
+  batchDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#FFFFFF",
+  },
+  batchDotActive: {
+    alignSelf: "flex-end",
+  },
+  batchCount: {
+    ...TypeScale.captionSm,
+    color: "#4AE88C",
+    fontWeight: "500",
+  },
+  galleryBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(0,0,0,0.45)",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 24,
   },
-  scanButtonText: {
+  slideUpCard: {
+    width: "100%",
+    backgroundColor: "rgba(255,255,255,0.94)",
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  cardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+    gap: 12,
+  },
+  cardImageWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#F0F0F3",
+  },
+  cardImage: {
+    width: "100%",
+    height: "100%",
+  },
+  cardInfo: {
+    flex: 1,
+    gap: 3,
+  },
+  cardCategory: {
+    ...TypeScale.captionSm,
+    color: "#888888",
+    fontWeight: "500",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  cardTitle: {
     ...TypeScale.bodyLg,
-    color: "#FFFFFF",
+    color: "#1A1A1A",
+    fontWeight: "600",
   },
-  uploadButton: {
+  cardMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 2,
+  },
+  cardRank: {
+    ...TypeScale.captionMd,
+    color: "#666666",
+    fontWeight: "500",
+  },
+  gatedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  gatedBadgeGreen: {
+    backgroundColor: "#2D8A4E",
+  },
+  gatedBadgeRed: {
+    backgroundColor: "#DC2626",
+  },
+  gatedText: {
+    ...TypeScale.captionXs,
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  cardChevron: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#F0F0F3",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chevronText: {
+    fontSize: 22,
+    color: "#999999",
+    fontWeight: "300",
+    marginTop: -2,
+  },
+  cardDismiss: {
+    alignItems: "center",
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0,0,0,0.06)",
+  },
+  cardDismissText: {
+    ...TypeScale.captionMd,
+    color: "#999999",
+    fontWeight: "500",
+  },
+  permissionContainer: {
+    flex: 1,
+    backgroundColor: "#0A0A0A",
+  },
+  permissionInner: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 32,
+    gap: 16,
+  },
+  permissionIconWrap: {
+    marginBottom: 8,
+  },
+  permissionTitle: {
+    ...TypeScale.headingMd,
+    color: "#FFFFFF",
+    textAlign: "center",
+  },
+  permissionDesc: {
+    ...TypeScale.bodyMd,
+    color: "#888888",
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  permissionButton: {
+    width: "100%",
+    height: 52,
+    borderRadius: 50,
+    backgroundColor: "#4AE88C",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+  },
+  permissionButtonText: {
+    ...TypeScale.bodyLg,
+    color: "#0A0A0A",
+    fontWeight: "700",
+  },
+  permissionGalleryBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    alignSelf: "center",
+    marginTop: 8,
   },
-  uploadButtonText: {
+  permissionGalleryText: {
     ...TypeScale.bodyMd,
     fontWeight: "600",
     color: "#FF6B1A",
-  },
-  recentSection: {
-    marginTop: 40,
-    maxWidth: MAX_WIDTH,
-    alignSelf: "center",
-    width: "100%",
-  },
-  recentTitle: {
-    ...TypeScale.sectionMd,
-    color: "#1A1A1A",
-  },
-  emptyState: {
-    alignItems: "center",
-    paddingVertical: 32,
-    gap: 8,
-  },
-  emptyTitle: {
-    ...TypeScale.bodyLg,
-    fontWeight: "600",
-    color: "#1A1A1A",
-  },
-  emptyDesc: {
-    ...TypeScale.mutedSm,
-    color: "#AAAAAA",
-    textAlign: "center",
   },
 });
