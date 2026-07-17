@@ -20,7 +20,6 @@ import Animated, {
   Easing,
   interpolate,
   cancelAnimation,
-  runOnJS,
 } from "react-native-reanimated";
 import {
   ArrowLeft,
@@ -351,7 +350,7 @@ export default function ScanScreen() {
       <View style={styles.overlay}>
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <Pressable style={styles.headerBtn} onPress={handleBack} hitSlop={8}>
-            <ArrowLeft size={22} color="#FFFFFF" strokeWidth={2.2} />
+            <ArrowLeft size={22} color="#1A1A1A" strokeWidth={2.2} />
           </Pressable>
           <Text style={styles.headerTitle}>Sourcing Engine</Text>
           <Pressable
@@ -361,9 +360,9 @@ export default function ScanScreen() {
           >
             <View style={styles.torchBtn}>
               {torchOn ? (
-                <Zap size={20} color="#FFD60A" strokeWidth={2.2} />
+                <Zap size={20} color="#FF6B1A" strokeWidth={2.2} />
               ) : (
-                <ZapOff size={20} color="#FFFFFF" strokeWidth={2.2} />
+                <ZapOff size={20} color="#1A1A1A" strokeWidth={2.2} />
               )}
             </View>
           </Pressable>
@@ -434,7 +433,7 @@ export default function ScanScreen() {
                 style={styles.galleryBtn}
                 onPress={pickFromGallery}
               >
-                <ImageIcon size={18} color="#FFFFFF" strokeWidth={2} />
+                <ImageIcon size={18} color="#1A1A1A" strokeWidth={2} />
               </Pressable>
             </>
           )}
@@ -530,7 +529,7 @@ function CameraViewIcon() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#000000",
+    backgroundColor: "#FFFFFF",
   },
   overlay: {
     ...StyleSheet.absoluteFill,
@@ -541,28 +540,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingBottom: 12,
+    backgroundColor: "rgba(255,255,255,0.92)",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(0,0,0,0.06)",
   },
   headerBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "#F0F0F3",
   },
   headerTitle: {
     ...TypeScale.sectionLg,
     flex: 1,
     textAlign: "center",
-    color: "#FFFFFF",
+    color: "#1A1A1A",
   },
   torchBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "#F0F0F3",
   },
   viewfinderArea: {
     flex: 1,
@@ -584,7 +586,7 @@ const styles = StyleSheet.create({
     left: 0,
     borderTopWidth: 3,
     borderLeftWidth: 3,
-    borderColor: "#FFFFFF",
+    borderColor: "#4A7A28",
     borderTopLeftRadius: 12,
   },
   cornerTR: {
@@ -592,7 +594,7 @@ const styles = StyleSheet.create({
     right: 0,
     borderTopWidth: 3,
     borderRightWidth: 3,
-    borderColor: "#FFFFFF",
+    borderColor: "#4A7A28",
     borderTopRightRadius: 12,
   },
   cornerBL: {
@@ -600,7 +602,7 @@ const styles = StyleSheet.create({
     left: 0,
     borderBottomWidth: 3,
     borderLeftWidth: 3,
-    borderColor: "#FFFFFF",
+    borderColor: "#4A7A28",
     borderBottomLeftRadius: 12,
   },
   cornerBR: {
@@ -608,7 +610,7 @@ const styles = StyleSheet.create({
     right: 0,
     borderBottomWidth: 3,
     borderRightWidth: 3,
-    borderColor: "#FFFFFF",
+    borderColor: "#4A7A28",
     borderBottomRightRadius: 12,
   },
   scanLine: {
@@ -636,7 +638,7 @@ const styles = StyleSheet.create({
   },
   hintText: {
     ...TypeScale.captionLg,
-    color: "rgba(255,255,255,0.7)",
+    color: "#888888",
     marginTop: 24,
     textAlign: "center",
   },
@@ -648,7 +650,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "rgba(28,42,14,0.88)",
+    backgroundColor: "#1C2A0E",
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 50,
@@ -661,30 +663,32 @@ const styles = StyleSheet.create({
   bottomArea: {
     alignItems: "center",
     paddingHorizontal: 20,
+    paddingBottom: 16,
     gap: 12,
+    backgroundColor: "#FFFFFF",
   },
   batchToggle: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "#F0F0F3",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 50,
   },
   batchLabel: {
     ...TypeScale.captionMd,
-    color: "#AAAAAA",
+    color: "#888888",
     fontWeight: "500",
   },
   batchLabelActive: {
-    color: "#4AE88C",
+    color: "#2D4A1E",
   },
   batchTrack: {
     width: 36,
     height: 20,
     borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.15)",
+    backgroundColor: "#E0E1E6",
     justifyContent: "center",
     paddingHorizontal: 2,
   },
@@ -702,27 +706,27 @@ const styles = StyleSheet.create({
   },
   batchCount: {
     ...TypeScale.captionSm,
-    color: "#4AE88C",
+    color: "#2D4A1E",
     fontWeight: "500",
   },
   galleryBtn: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "#F0F0F3",
     alignItems: "center",
     justifyContent: "center",
   },
   slideUpCard: {
     width: "100%",
-    backgroundColor: "rgba(255,255,255,0.94)",
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 12,
+    shadowColor: "#1A1A1A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
   },
   cardContent: {
     flexDirection: "row",
@@ -804,7 +808,7 @@ const styles = StyleSheet.create({
   cardDismiss: {
     alignItems: "center",
     paddingVertical: 10,
-    borderTopWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: "rgba(0,0,0,0.06)",
   },
   cardDismissText: {
@@ -814,7 +818,7 @@ const styles = StyleSheet.create({
   },
   permissionContainer: {
     flex: 1,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#FFFFFF",
   },
   permissionInner: {
     flex: 1,
@@ -828,7 +832,7 @@ const styles = StyleSheet.create({
   },
   permissionTitle: {
     ...TypeScale.headingMd,
-    color: "#FFFFFF",
+    color: "#1A1A1A",
     textAlign: "center",
   },
   permissionDesc: {
@@ -841,14 +845,14 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 52,
     borderRadius: 50,
-    backgroundColor: "#4AE88C",
+    backgroundColor: "#1C2A0E",
     alignItems: "center",
     justifyContent: "center",
     marginTop: 8,
   },
   permissionButtonText: {
     ...TypeScale.bodyLg,
-    color: "#0A0A0A",
+    color: "#FFFFFF",
     fontWeight: "700",
   },
   permissionGalleryBtn: {
