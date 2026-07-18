@@ -18,7 +18,6 @@ import {
   CreditCard,
   Crown,
   Info,
-  Settings,
   Star,
   UserRound,
 } from "lucide-react-native";
@@ -103,9 +102,6 @@ export default function ProfileScreen() {
         {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Profile</Text>
-          <Pressable style={styles.settingsButton} hitSlop={8}>
-            <Settings size={22} color={colors.text} strokeWidth={2} />
-          </Pressable>
         </View>
 
         {/* Profile Card */}
@@ -252,13 +248,6 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     letterSpacing: -0.78,
     color: "#1A1A1A",
-  },
-  settingsButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
   },
 
   // Profile Card
