@@ -222,6 +222,9 @@ const styles = StyleSheet.create({
   contentInner: {
     paddingHorizontal: 24,
     paddingTop: 32,
+    maxWidth: MAX_WIDTH,
+    alignSelf: "center",
+    width: "100%",
   },
 
   // Features

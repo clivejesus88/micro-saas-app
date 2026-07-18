@@ -233,6 +233,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 32,
+    maxWidth: MAX_WIDTH,
+    alignSelf: "center",
+    width: "100%",
   },
   formTitle: {
     fontFamily: "Inter_700Bold",

@@ -89,8 +89,6 @@ export const AppColors = {
 
 export type AppColorScheme = typeof AppColors.light;
 
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
-
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */

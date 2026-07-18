@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -47,12 +47,6 @@ interface ScanItem {
   isSaved: boolean;
   image: string;
 }
-
-const STATS_DATA: StatItem[] = [
-  { value: "47", label: "Total Scans" },
-  { value: "$8,240", label: "Total Saved", color: "#4A7A28" },
-  { value: "68%", label: "Avg Markup", color: "#FF6B1A" },
-];
 
 const FILTER_CHIPS = [
   "All",
@@ -156,6 +150,24 @@ export default function HistoryScreen() {
   const [tempSortBy, setTempSortBy] = useState("latest");
   const [tempFilter, setTempFilter] = useState("All");
 
+  const totalSaved = useMemo(
+    () => SCANS_DATA.reduce((sum, s) => sum + s.savings, 0),
+    []
+  );
+  const avgMarkup = useMemo(() => {
+    const avg =
+      SCANS_DATA.reduce((sum, s) => {
+        const pct = parseInt(s.markup.replace("%", ""), 10);
+        return sum + pct;
+      }, 0) / SCANS_DATA.length;
+    return `${Math.round(avg)}%`;
+  }, []);
+  const statsData: StatItem[] = [
+    { value: String(SCANS_DATA.length), label: "Total Scans" },
+    { value: `$${totalSaved.toLocaleString()}`, label: "Total Saved", color: "#4A7A28" },
+    { value: avgMarkup, label: "Avg Markup", color: "#FF6B1A" },
+  ];
+
   const sheetY = useSharedValue(1);
 
   const sheetAnimatedStyle = useAnimatedStyle(() => ({
@@ -222,7 +234,7 @@ export default function HistoryScreen() {
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
-          {STATS_DATA.map((stat) => (
+          {statsData.map((stat) => (
             <View key={stat.label} style={styles.statCard}>
               <Text
                 style={[
@@ -385,7 +397,7 @@ export default function HistoryScreen() {
                         {opt.label}
                       </Text>
                       {tempSortBy === opt.key && (
-                        <Check size={16} color="#1B4332" strokeWidth={2.5} />
+                        <Check size={16} color="#1C2A0E" strokeWidth={2.5} />
                       )}
                     </Pressable>
                   ))}
@@ -774,7 +786,7 @@ const styles = StyleSheet.create({
   },
   sheetSortTextActive: {
     fontWeight: "600",
-    color: "#1B4332",
+    color: "#1C2A0E",
   },
   sheetChipRow: {
     flexDirection: "row",
@@ -789,7 +801,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.04)",
   },
   sheetChipActive: {
-    backgroundColor: "#1B4332",
+    backgroundColor: "#1C2A0E",
   },
   sheetChipText: {
     ...TypeScale.captionLg,
@@ -823,7 +835,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 14,
     borderRadius: 14,
-    backgroundColor: "#1B4332",
+    backgroundColor: "#1C2A0E",
   },
   sheetApplyText: {
     ...TypeScale.bodyMd,

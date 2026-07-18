@@ -15,7 +15,7 @@ import {
   Tag,
   TrendingDown,
 } from "lucide-react-native";
-import { MAX_WIDTH, BOTTOM_NAV_HEIGHT } from "@/constants/layout";
+import { MAX_WIDTH, BOTTOM_NAV_HEIGHT, MARKUP_CARD_RATIO } from "@/constants/layout";
 import { useScrollContext } from "@/contexts/scroll-context";
 import { useSaved } from "@/contexts/saved-context";
 import { ALL_SCANS } from "@/constants/scans-data";
@@ -34,9 +34,7 @@ const CATEGORIES: Category[] = [
   { id: "sneakers", label: "Sneakers" },
 ];
 
-const TOTAL_SAVED = 4820;
 const SAVINGS_GOAL = 6000;
-const PROGRESS = Math.min(TOTAL_SAVED / SAVINGS_GOAL, 1);
 
 export default function VaultScreen() {
   const insets = useSafeAreaInsets();
@@ -74,6 +72,8 @@ export default function VaultScreen() {
     return savedItems.reduce((sum, item) => sum + (item.originalPrice - item.price), 0);
   }, [savedItems]);
 
+  const progress = useMemo(() => Math.min(totalSaved / SAVINGS_GOAL, 1), [totalSaved]);
+
   const bottomSpacer = BOTTOM_NAV_HEIGHT + insets.bottom + 20;
 
   return (
@@ -100,11 +100,11 @@ export default function VaultScreen() {
           </View>
 
           <Text style={styles.totalLabel}>Total Saved</Text>
-          <Text style={styles.totalAmount}>${(totalSaved || TOTAL_SAVED).toLocaleString()}</Text>
+          <Text style={styles.totalAmount}>${totalSaved.toLocaleString()}</Text>
 
           <View style={styles.progressTrack}>
             <View
-              style={[styles.progressFill, { width: `${PROGRESS * 100}%` }]}
+              style={[styles.progressFill, { width: `${progress * 100}%` }]}
             />
           </View>
           <View style={styles.goalRow}>
@@ -125,7 +125,7 @@ export default function VaultScreen() {
             </View>
             <View style={styles.statPill}>
               <TrendingDown size={14} color="#FFFFFF" strokeWidth={2.4} />
-              <Text style={styles.statText}>$3,240 Saved</Text>
+              <Text style={styles.statText}>${totalSaved.toLocaleString()} Saved</Text>
             </View>
           </View>
         </View>
@@ -182,7 +182,7 @@ export default function VaultScreen() {
                   <View style={styles.cardImageWrapper}>
                     <Image
                       source={item.imageUrl}
-                      style={styles.cardImage}
+                      style={[styles.cardImage, { aspectRatio: MARKUP_CARD_RATIO }]}
                       contentFit="cover"
                     />
                     <View style={styles.markupBadge}>

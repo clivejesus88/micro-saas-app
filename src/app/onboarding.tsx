@@ -1061,7 +1061,7 @@ const styles = StyleSheet.create({
     top: "50%",
     left: 0,
     height: 3,
-    backgroundColor: "#E8453C",
+    backgroundColor: "#FF6B1A",
     borderRadius: 1.5,
     transform: [{ translateY: -1.5 }],
   },
@@ -1088,7 +1088,7 @@ const styles = StyleSheet.create({
   },
   markupBadge: {
     marginTop: 14,
-    backgroundColor: "#E8453C",
+    backgroundColor: "#FF6B1A",
     borderRadius: 10,
     paddingVertical: 6,
     alignItems: "center",
