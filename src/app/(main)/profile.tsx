@@ -23,6 +23,7 @@ import {
 import { MAX_WIDTH, BOTTOM_NAV_HEIGHT } from "@/constants/layout";
 import { useScrollContext } from "@/contexts/scroll-context";
 import { useUserProfile } from "@/contexts/user-context";
+import { useAppColors } from "@/hooks/use-app-colors";
 import { TypeScale } from "@/constants/typography";
 
 interface MenuRow {
@@ -54,6 +55,7 @@ const SUPPORT_ROWS: MenuRow[] = [
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { colors } = useAppColors();
   const { name, email, avatarUri } = useUserProfile();
   const initials = name
     .split(" ")
@@ -71,7 +73,7 @@ export default function ProfileScreen() {
   const bottomSpacer = BOTTOM_NAV_HEIGHT + insets.bottom + 20;
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[
@@ -86,16 +88,16 @@ export default function ProfileScreen() {
       >
         {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Profile</Text>
           <Pressable style={styles.settingsButton} hitSlop={8}>
-            <Settings size={22} color="#1A1A1A" strokeWidth={2} />
+            <Settings size={22} color={colors.text} strokeWidth={2} />
           </Pressable>
         </View>
 
         {/* Profile Card */}
-        <View style={styles.profileCard}>
+        <View style={[styles.profileCard, { backgroundColor: colors.surface, shadowColor: colors.shadow }]}>
           <View style={styles.avatarWrapper}>
-            <View style={styles.avatar}>
+            <View style={[styles.avatar, { backgroundColor: colors.accentDark }]}>
               {avatarUri ? (
                 <Text style={styles.avatarText}>{initials}</Text>
               ) : (
@@ -105,43 +107,43 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          <Text style={styles.profileName}>{name}</Text>
-          <Text style={styles.profileEmail}>{email}</Text>
+          <Text style={[styles.profileName, { color: colors.text }]}>{name}</Text>
+          <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{email}</Text>
 
-          <View style={styles.proBadge}>
+          <View style={[styles.proBadge, { backgroundColor: colors.accentDeep }]}>
             <Text style={styles.proBadgeText}>PRO Member</Text>
           </View>
 
-          <View style={styles.statsDivider} />
+          <View style={[styles.statsDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statsGrid}>
-            <View style={styles.statCell}>
-              <Text style={styles.statValue}>47</Text>
-              <Text style={styles.statLabel}>Scans</Text>
+            <View style={[styles.statCell, { borderRightColor: colors.border }]}>
+              <Text style={[styles.statValue, { color: colors.text }]}>47</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Scans</Text>
+            </View>
+            <View style={[styles.statCell, { borderRightColor: colors.border }]}>
+              <Text style={[styles.statValue, { color: colors.accent }]}>$3,240</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Saved</Text>
             </View>
             <View style={styles.statCell}>
-              <Text style={[styles.statValue, { color: "#4A7A28" }]}>$3,240</Text>
-              <Text style={styles.statLabel}>Saved</Text>
-            </View>
-            <View style={styles.statCell}>
-              <Text style={[styles.statValue, { color: "#FF6B1A" }]}>12</Text>
-              <Text style={styles.statLabel}>Alerts</Text>
+              <Text style={[styles.statValue, { color: colors.orange }]}>12</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Alerts</Text>
             </View>
           </View>
         </View>
 
         {/* Account */}
-        <MenuSection title="ACCOUNT" rows={ACCOUNT_ROWS} lastRowHasBorder={false} />
+        <MenuSection title="ACCOUNT" rows={ACCOUNT_ROWS} lastRowHasBorder={false} colors={colors} />
 
         {/* Subscription */}
-        <MenuSection title="SUBSCRIPTION" rows={SUBSCRIPTION_ROWS} lastRowHasBorder={false} />
+        <MenuSection title="SUBSCRIPTION" rows={SUBSCRIPTION_ROWS} lastRowHasBorder={false} colors={colors} />
 
         {/* Support */}
-        <MenuSection title="SUPPORT" rows={SUPPORT_ROWS} lastRowHasBorder={false} />
+        <MenuSection title="SUPPORT" rows={SUPPORT_ROWS} lastRowHasBorder={false} colors={colors} />
 
         {/* Sign Out */}
         <View style={styles.signOutWrapper}>
-          <Pressable style={styles.signOutButton} onPress={() => router.replace("/login")}>
-            <Text style={styles.signOutText}>Sign Out</Text>
+          <Pressable style={[styles.signOutButton, { borderColor: colors.border, backgroundColor: colors.surface }]} onPress={() => router.replace("/login")}>
+            <Text style={[styles.signOutText, { color: colors.orange }]}>Sign Out</Text>
           </Pressable>
         </View>
       </ScrollView>

@@ -11,8 +11,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ScanLine } from "lucide-react-native";
 import { useResponsive } from "@/hooks/use-responsive";
-import { MAX_WIDTH, BOTTOM_NAV_HEIGHT } from "@/constants/layout";
+import { useAppColors } from "@/hooks/use-app-colors";
+import { BOTTOM_NAV_HEIGHT } from "@/constants/layout";
 import { useScrollContext } from "@/contexts/scroll-context";
+import { useUserProfile } from "@/contexts/user-context";
 import { TypeScale } from "@/constants/typography";
 
 interface DayItem {
@@ -42,7 +44,9 @@ function buildWeekDays(): DayItem[] {
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { screenWidth } = useResponsive();
+  const { colors } = useAppColors();
   const router = useRouter();
+  const { name, avatarUri } = useUserProfile();
   const {
     onScrollBeginDrag,
     onScrollEndDrag,
@@ -54,7 +58,7 @@ export default function HomeScreen() {
   const bottomSpacer = BOTTOM_NAV_HEIGHT + insets.bottom + 20;
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[
@@ -72,12 +76,12 @@ export default function HomeScreen() {
       >
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Good morning</Text>
-            <Text style={styles.userName}>Alex Rivera</Text>
+            <Text style={[styles.greeting, { color: colors.textMuted }]}>Good morning</Text>
+            <Text style={[styles.userName, { color: colors.text }]}>{name}</Text>
           </View>
           <Pressable onPress={() => router.push("/profile")}>
             <Image
-              source="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=240&auto=format&fit=crop"
+              source={avatarUri || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=240&auto=format&fit=crop"}
               style={styles.avatar}
               contentFit="cover"
             />
@@ -90,13 +94,15 @@ export default function HomeScreen() {
               key={day.id}
               style={[
                 styles.datePill,
-                day.isToday && styles.datePillActive,
+                { backgroundColor: colors.surface },
+                day.isToday && { backgroundColor: colors.accentDark },
               ]}
             >
               <Text
                 style={[
                   styles.datePillDay,
-                  day.isToday && styles.datePillTextActive,
+                  { color: colors.textSecondary },
+                  day.isToday && { color: colors.white },
                 ]}
               >
                 {day.day}
@@ -104,7 +110,8 @@ export default function HomeScreen() {
               <Text
                 style={[
                   styles.datePillDate,
-                  day.isToday && styles.datePillTextActive,
+                  { color: colors.textSecondary },
+                  day.isToday && { color: colors.white },
                 ]}
               >
                 {day.date}
@@ -114,14 +121,14 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Top Markups Today</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Top Markups Today</Text>
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No markups yet</Text>
-            <Text style={styles.emptyDesc}>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No markups yet</Text>
+            <Text style={[styles.emptyDesc, { color: colors.textMuted }]}>
               Scan products to see markup opportunities here
             </Text>
             <Pressable
-              style={styles.emptyButton}
+              style={[styles.emptyButton, { backgroundColor: colors.accentDeep }]}
               onPress={() => router.push("/scan")}
             >
               <ScanLine size={16} color="#FFFFFF" strokeWidth={2} />
@@ -132,14 +139,14 @@ export default function HomeScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Trending Finds</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Trending Finds</Text>
             <Pressable onPress={() => router.push("/history")}>
-              <Text style={styles.seeAll}>See all</Text>
+              <Text style={[styles.seeAll, { color: colors.orange }]}>See all</Text>
             </Pressable>
           </View>
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No trending items</Text>
-            <Text style={styles.emptyDesc}>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No trending items</Text>
+            <Text style={[styles.emptyDesc, { color: colors.textMuted }]}>
               Trending products will appear here as you scan
             </Text>
           </View>
@@ -154,7 +161,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
   },
   scroll: {
     flex: 1,
@@ -167,12 +173,10 @@ const styles = StyleSheet.create({
   },
   greeting: {
     ...TypeScale.mutedSm,
-    color: "#888888",
   },
   userName: {
     ...TypeScale.headingMd,
     marginTop: 4,
-    color: "#1A1A1A",
   },
   avatar: {
     width: 48,
@@ -194,27 +198,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     borderRadius: 28,
-    backgroundColor: "#FFFFFF",
     gap: 4,
-  },
-  datePillActive: {
-    backgroundColor: "#2D4A1E",
-    shadowColor: "#2D4A1E",
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.22,
-    shadowRadius: 28,
-    elevation: 6,
   },
   datePillDay: {
     ...TypeScale.captionSm,
-    color: "#888888",
   },
   datePillDate: {
     ...TypeScale.captionLg,
-    color: "#888888",
-  },
-  datePillTextActive: {
-    color: "#FFFFFF",
   },
   section: {
     marginTop: 40,
@@ -226,11 +216,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...TypeScale.sectionMd,
-    color: "#1A1A1A",
   },
   seeAll: {
     ...TypeScale.captionLg,
-    color: "#FF6B1A",
   },
   emptyState: {
     marginTop: 20,
@@ -241,11 +229,9 @@ const styles = StyleSheet.create({
   emptyTitle: {
     ...TypeScale.bodyLg,
     fontWeight: "600",
-    color: "#1A1A1A",
   },
   emptyDesc: {
     ...TypeScale.mutedSm,
-    color: "#AAAAAA",
     textAlign: "center",
     maxWidth: 260,
   },
@@ -254,7 +240,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     marginTop: 16,
-    backgroundColor: "#1C2A0E",
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 24,

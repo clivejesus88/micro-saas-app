@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useScrollContext } from "@/contexts/scroll-context";
+import { useAppColors } from "@/hooks/use-app-colors";
 import { MAX_WIDTH } from "@/constants/layout";
 import { TypeScale } from "@/constants/typography";
 
@@ -35,6 +36,7 @@ export function BottomNav() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { isNavVisible } = useScrollContext();
+  const { colors } = useAppColors();
 
   const activeItem: NavItem =
     TABS.find((t) => pathname === t.route)?.key ?? "home";
@@ -63,7 +65,7 @@ export function BottomNav() {
     >
       <View style={styles.container}>
         <View
-          style={[styles.containerInner, { paddingBottom: insets.bottom + 0 }]}
+          style={[styles.containerInner, { paddingBottom: insets.bottom + 0, backgroundColor: colors.navBg, borderColor: colors.navBorder }]}
         >
           <BlurView intensity={80} tint={"systemChromeMaterial"} style={styles.blur}>
             <View style={styles.navBar}>
@@ -83,14 +85,14 @@ export function BottomNav() {
                     <View style={[styles.iconWrap, isActive && styles.iconWrapActive]}>
                       <Icon
                         size={22}
-                        color={isActive ? "#037e4a" : "rgba(0,0,0,0.35)"}
+                        color={isActive ? colors.navActive : colors.navInactive}
                         strokeWidth={isActive ? 2.2 : 1.8}
                       />
                     </View>
                     <Text
                       style={[
                         styles.tabLabel,
-                        { color: isActive ? "#037e4a" : "rgba(0,0,0,0.35)" },
+                        { color: isActive ? colors.navActive : colors.navInactive },
                         isActive && { fontWeight: "600" },
                       ]}
                     >
@@ -123,7 +125,6 @@ const styles = StyleSheet.create({
   },
   containerInner: {
     width: "100%",
-    backgroundColor: "rgba(244, 247, 242, 0.08)",
     borderRadius: 28,
     overflow: "hidden",
     shadowColor: "#3d3d3d",
@@ -132,7 +133,6 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 0,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(74,122,40,0.22)",
   },
   blur: {
     borderRadius: 30,

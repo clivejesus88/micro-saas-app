@@ -4,13 +4,16 @@ import { BottomNav } from "@/components/bottom-nav";
 import { ScrollProvider } from "@/contexts/scroll-context";
 import { SavedProvider } from "@/contexts/saved-context";
 import { UserProvider } from "@/contexts/user-context";
+import { useAppColors } from "@/hooks/use-app-colors";
 
 export default function MainLayout() {
+  const { colors } = useAppColors();
+
   return (
     <UserProvider>
       <SavedProvider>
         <ScrollProvider>
-          <View style={styles.container}>
+          <View style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.content}>
               <Slot />
             </View>
