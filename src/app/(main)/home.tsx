@@ -24,6 +24,13 @@ interface DayItem {
   isToday: boolean;
 }
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 function buildWeekDays(): DayItem[] {
   const today = new Date();
   const startOfWeek = new Date(today);
@@ -76,7 +83,7 @@ export default function HomeScreen() {
       >
         <View style={styles.header}>
           <View>
-            <Text style={[styles.greeting, { color: colors.textMuted }]}>Good morning</Text>
+            <Text style={[styles.greeting, { color: colors.textMuted }]}>{getGreeting()}</Text>
             <Text style={[styles.userName, { color: colors.text }]}>{name}</Text>
           </View>
           <Pressable onPress={() => router.push("/profile")}>

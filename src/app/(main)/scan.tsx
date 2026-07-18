@@ -179,6 +179,7 @@ export default function ScanScreen() {
   const cornerScale = useSharedValue(1);
   const pulseOpacity = useSharedValue(0.3);
   const gridOpacity = useSharedValue(0.08);
+  const gestureTranslateY = useSharedValue(0);
 
   const computedBuyCost = useMemo(() => {
     const val = parseFloat(buyCost);
@@ -252,14 +253,24 @@ export default function ScanScreen() {
   const cornersStyle = useAnimatedStyle(() => ({
     transform: [{ scale: cornerScale.value }],
   }));
-  const cardStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: `${cardTranslateY.value}%` }],
-    opacity: cardOpacity.value,
-  }));
+  const cardStyle = useAnimatedStyle(() => {
+    if (gestureTranslateY.value > 0) {
+      const progress = interpolate(gestureTranslateY.value, [0, 200], [0, 1], { extrapolateRight: "clamp" });
+      return {
+        transform: [{ translateY: `${interpolate(progress, [0, 1], [0, 50])}%` }],
+        opacity: interpolate(progress, [0, 1], [1, 0.3]),
+      };
+    }
+    return {
+      transform: [{ translateY: `${cardTranslateY.value}%` }],
+      opacity: cardOpacity.value,
+    };
+  });
   const pulseStyle = useAnimatedStyle(() => ({ opacity: pulseOpacity.value }));
   const gridStyle = useAnimatedStyle(() => ({ opacity: gridOpacity.value }));
 
   const dismissCard = useCallback(() => {
+    gestureTranslateY.value = 0;
     Keyboard.dismiss();
     setDetectedProduct(null);
     setLastScannedBarcode(null);
@@ -271,16 +282,14 @@ export default function ScanScreen() {
   const swipeDown = Gesture.Pan()
     .onUpdate((e) => {
       if (e.translationY > 0) {
-        cardTranslateY.value = interpolate(e.translationY, [0, 200], [0, 50], { extrapolateRight: "clamp" });
-        cardOpacity.value = interpolate(e.translationY, [0, 200], [1, 0.3], { extrapolateRight: "clamp" });
+        gestureTranslateY.value = e.translationY;
       }
     })
     .onEnd((e) => {
       if (e.translationY > 80 || e.velocityY > 500) {
         runOnJS(dismissCard)();
       } else {
-        cardTranslateY.value = withSpring(0, { damping: 18, stiffness: 100 });
-        cardOpacity.value = withTiming(1, { duration: 200 });
+        gestureTranslateY.value = withSpring(0, { damping: 18, stiffness: 100 });
       }
     });
 
