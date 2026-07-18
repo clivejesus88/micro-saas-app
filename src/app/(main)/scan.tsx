@@ -35,17 +35,16 @@ import {
   Zap,
   ZapOff,
   ImageIcon,
-  Lock,
   Layers,
   ScanLine,
   Sparkles,
-  ShieldCheck,
   TrendingUp,
-  AlertTriangle,
-  BadgeCheck,
   CircleDollarSign,
+  Bookmark,
+  ChevronRight,
 } from "lucide-react-native";
 import { TypeScale } from "@/constants/typography";
+import { useSaved } from "@/contexts/saved-context";
 
 type ScanState = "idle" | "detected" | "analyzing";
 
@@ -143,6 +142,24 @@ function formatSalesRankPercent(pct: number): string {
   return `Top ${Math.round(pct)}%`;
 }
 
+type Verdict = "hot" | "flip" | "tight" | "overpriced";
+
+function getVerdict(netProfit: number, roi: number): Verdict {
+  if (netProfit <= 0) return "overpriced";
+  if (roi >= 80 || netProfit >= 100) return "hot";
+  if (roi >= 30 || netProfit >= 30) return "flip";
+  return "tight";
+}
+
+const VERDICT_CONFIG: Record<Verdict, { label: string; emoji: string; bg: string; color: string }> = {
+  hot: { label: "Hot Find", emoji: "\uD83D\uDD25", bg: "#FEF3C7", color: "#92400E" },
+  flip: { label: "Quick Flip", emoji: "\u26A1", bg: "#F0F6E8", color: "#1C2A0E" },
+  tight: { label: "Tight Margin", emoji: "\uD83D\uDCA1", bg: "#F3F4F6", color: "#6B7280" },
+  overpriced: { label: "Overpriced", emoji: "\u26A0\uFE0F", bg: "#FEF2F2", color: "#991B1B" },
+};
+
+const RETAIL_SOURCES_COUNT = 50;
+
 function triggerHaptic(isHighProfit: boolean) {
   try {
     if (isHighProfit) {
@@ -159,6 +176,7 @@ function triggerHaptic(isHighProfit: boolean) {
 export default function ScanScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { isSaved, toggleSave } = useSaved();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const costInputRef = useRef<TextInput>(null);
@@ -179,7 +197,6 @@ export default function ScanScreen() {
   const cornerScale = useSharedValue(1);
   const pulseOpacity = useSharedValue(0.3);
   const gridOpacity = useSharedValue(0.08);
-  const gestureTranslateY = useSharedValue(0);
 
   const computedBuyCost = useMemo(() => {
     const val = parseFloat(buyCost);
@@ -195,6 +212,9 @@ export default function ScanScreen() {
     if (computedBuyCost <= 0) return 0;
     return (netProfit / computedBuyCost) * 100;
   }, [netProfit, computedBuyCost]);
+
+  const verdict = useMemo(() => getVerdict(netProfit, roi), [netProfit, roi]);
+  const verdictConfig = VERDICT_CONFIG[verdict];
 
   const scanStateSv = useSharedValue<ScanState>("idle");
 
@@ -253,24 +273,14 @@ export default function ScanScreen() {
   const cornersStyle = useAnimatedStyle(() => ({
     transform: [{ scale: cornerScale.value }],
   }));
-  const cardStyle = useAnimatedStyle(() => {
-    if (gestureTranslateY.value > 0) {
-      const progress = interpolate(gestureTranslateY.value, [0, 200], [0, 1], { extrapolateRight: "clamp" });
-      return {
-        transform: [{ translateY: `${interpolate(progress, [0, 1], [0, 50])}%` }],
-        opacity: interpolate(progress, [0, 1], [1, 0.3]),
-      };
-    }
-    return {
-      transform: [{ translateY: `${cardTranslateY.value}%` }],
-      opacity: cardOpacity.value,
-    };
-  });
+  const cardStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: `${cardTranslateY.value}%` }],
+    opacity: cardOpacity.value,
+  }));
   const pulseStyle = useAnimatedStyle(() => ({ opacity: pulseOpacity.value }));
   const gridStyle = useAnimatedStyle(() => ({ opacity: gridOpacity.value }));
 
   const dismissCard = useCallback(() => {
-    gestureTranslateY.value = 0;
     Keyboard.dismiss();
     setDetectedProduct(null);
     setLastScannedBarcode(null);
@@ -282,14 +292,20 @@ export default function ScanScreen() {
   const swipeDown = Gesture.Pan()
     .onUpdate((e) => {
       if (e.translationY > 0) {
-        gestureTranslateY.value = e.translationY;
+        // eslint-disable-next-line react-hooks/immutability -- gesture worklet, safe at runtime
+        cardTranslateY.value = interpolate(e.translationY, [0, 200], [0, 50], { extrapolateRight: "clamp" });
+        // eslint-disable-next-line react-hooks/immutability -- gesture worklet, safe at runtime
+        cardOpacity.value = interpolate(e.translationY, [0, 200], [1, 0.3], { extrapolateRight: "clamp" });
       }
     })
     .onEnd((e) => {
       if (e.translationY > 80 || e.velocityY > 500) {
         runOnJS(dismissCard)();
       } else {
-        gestureTranslateY.value = withSpring(0, { damping: 18, stiffness: 100 });
+        // eslint-disable-next-line react-hooks/immutability -- gesture worklet, safe at runtime
+        cardTranslateY.value = withSpring(0, { damping: 18, stiffness: 100 });
+        // eslint-disable-next-line react-hooks/immutability -- gesture worklet, safe at runtime
+        cardOpacity.value = withTiming(1, { duration: 200 });
       }
     });
 
@@ -520,122 +536,115 @@ export default function ScanScreen() {
               </View>
 
               <View style={styles.cardScrollContent}>
-                {/* ═══════ ZONE 1: RISK SHIELD ═══════ */}
-                <View style={styles.zone1}>
-                  <View style={[
-                    styles.eligibilityBadge,
-                    detectedProduct.isGated ? styles.eligibilityGated : styles.eligibilityUngated,
-                  ]}>
-                    {detectedProduct.isGated ? (
-                      <Lock size={13} color="#FFFFFF" strokeWidth={2.5} />
-                    ) : (
-                      <BadgeCheck size={13} color="#FFFFFF" strokeWidth={2.5} />
-                    )}
-                    <Text style={styles.eligibilityText}>
-                      {detectedProduct.isGated ? "Gated" : "Ungated"}
+                {/* ═══════ ROW 1: PRODUCT + VERDICT ═══════ */}
+                <View style={styles.cardTopRow}>
+                  <View style={styles.cardProduct}>
+                    <View style={styles.cardThumb}>
+                      <Image source={{ uri: detectedProduct.image }} style={styles.cardThumbImage} contentFit="cover" />
+                    </View>
+                    <View style={styles.cardProductInfo}>
+                      <Text style={styles.cardProductCategory}>{detectedProduct.category}</Text>
+                      <Text style={styles.cardProductName} numberOfLines={2}>{detectedProduct.name}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.cardTopActions}>
+                    <View style={[styles.verdictPill, { backgroundColor: verdictConfig.bg }]}>
+                      <Text style={styles.verdictEmoji}>{verdictConfig.emoji}</Text>
+                      <Text style={[styles.verdictLabel, { color: verdictConfig.color }]}>{verdictConfig.label}</Text>
+                    </View>
+                    <Pressable
+                      style={({ pressed }) => [styles.saveBtn, pressed && { opacity: 0.6 }]}
+                      onPress={() => toggleSave(detectedProduct.id)}
+                      hitSlop={6}
+                    >
+                      <Bookmark
+                        size={18}
+                        color={isSaved(detectedProduct.id) ? "#4A7A28" : "#AAAAAA"}
+                        strokeWidth={2.2}
+                        fill={isSaved(detectedProduct.id) ? "#4A7A28" : "transparent"}
+                      />
+                    </Pressable>
+                  </View>
+                </View>
+
+                {/* ═══════ ROW 2: THE MONEY SHOT ═══════ */}
+                <View style={styles.moneyShot}>
+                  <View style={styles.moneyLeft}>
+                    <Text style={styles.moneyLabel}>NET PROFIT</Text>
+                    <Text style={[
+                      styles.moneyValue,
+                      { color: netProfit >= 0 ? "#16A34A" : "#DC2626" },
+                    ]}>
+                      {netProfit >= 0 ? "+" : ""}${netProfit.toFixed(2)}
                     </Text>
                   </View>
-
-                  {detectedProduct.ipRisk && (
-                    <View style={styles.ipAlertBanner}>
-                      <AlertTriangle size={13} color="#92400E" strokeWidth={2.5} />
-                      <Text style={styles.ipAlertText}>High IP Risk</Text>
-                    </View>
-                  )}
-
-                  {!detectedProduct.ipRisk && (
-                    <View style={styles.lowRiskBadge}>
-                      <ShieldCheck size={13} color="#4A7A28" strokeWidth={2.5} />
-                      <Text style={styles.lowRiskText}>Low Risk</Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* ═══════ ZONE 2: PRODUCT IDENTITY ═══════ */}
-                <View style={styles.zone2}>
-                  <View style={styles.zone2Thumb}>
-                    <Image source={{ uri: detectedProduct.image }} style={styles.zone2Image} contentFit="cover" />
-                  </View>
-                  <View style={styles.zone2Info}>
-                    <Text style={styles.zone2Category}>{detectedProduct.category}</Text>
-                    <Text style={styles.zone2Title} numberOfLines={2}>{detectedProduct.name}</Text>
-                    <View style={styles.velocityRow}>
-                      <View style={styles.velocityPill}>
-                        <TrendingUp size={11} color="#FFFFFF" strokeWidth={2.5} />
-                        <Text style={styles.velocityText}>
-                          #{detectedProduct.salesRank.toLocaleString()}
-                        </Text>
-                        <View style={styles.velocityDivider} />
-                        <Text style={styles.velocityPercent}>
-                          {formatSalesRankPercent(detectedProduct.salesRankPercent)}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </View>
-
-                {/* ═══════ ZONE 3: PROFIT ENGINE ═══════ */}
-                <View style={styles.zone3}>
-                  <View style={styles.profitRow}>
-                    <View style={styles.profitMain}>
-                      <Text style={styles.profitLabel}>Net Profit</Text>
+                  <View style={styles.moneyRight}>
+                    <View style={[
+                      styles.roiBadge,
+                      { backgroundColor: roi >= 50 ? "#F0F6E8" : roi >= 0 ? "#FFF7ED" : "#FEF2F2" },
+                    ]}>
                       <Text style={[
-                        styles.profitValue,
-                        { color: netProfit >= 0 ? "#16A34A" : "#DC2626" },
-                      ]}>
-                        {netProfit >= 0 ? "+" : ""}${netProfit.toFixed(2)}
-                      </Text>
-                    </View>
-                    <View style={styles.roiBlock}>
-                      <Text style={styles.roiLabel}>ROI</Text>
-                      <Text style={[
-                        styles.roiValue,
+                        styles.roiBadgeText,
                         { color: roi >= 50 ? "#16A34A" : roi >= 0 ? "#FF6B1A" : "#DC2626" },
                       ]}>
-                        {roi.toFixed(0)}%
+                        {roi.toFixed(0)}% ROI
                       </Text>
                     </View>
-                  </View>
-
-                  {/* Cost Input */}
-                  <View style={styles.costInputWrap}>
-                    <Text style={styles.costInputLabel}>Your Buy Cost</Text>
-                    <View style={[styles.costInputBox, costFocused && styles.costInputFocused]}>
-                      <CircleDollarSign size={16} color={costFocused ? "#4A7A28" : "#AAAAAA"} strokeWidth={2} />
-                      <TextInput
-                        ref={costInputRef}
-                        style={styles.costInput}
-                        value={buyCost}
-                        onChangeText={setBuyCost}
-                        onFocus={() => setCostFocused(true)}
-                        onBlur={() => setCostFocused(false)}
-                        placeholder="0.00"
-                        placeholderTextColor="#CCCCCC"
-                        keyboardType="numeric"
-                        returnKeyType="done"
-                        selectTextOnFocus
-                      />
+                    <View style={styles.velocityPill}>
+                      <TrendingUp size={10} color="#FFFFFF" strokeWidth={2.5} />
+                      <Text style={styles.velocityText}>#{detectedProduct.salesRank.toLocaleString()}</Text>
+                      <View style={styles.velocityDivider} />
+                      <Text style={styles.velocityPercent}>{formatSalesRankPercent(detectedProduct.salesRankPercent)}</Text>
                     </View>
                   </View>
-
-                  {/* CTA */}
-                  <Pressable
-                    style={({ pressed }) => [styles.analyzeBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]}
-                    onPress={handleAnalyze}
-                  >
-                    <LinearGradient
-                      colors={netProfit > 0 ? ["#2D4A1E", "#1C2A0E"] : ["#374151", "#1F2937"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.analyzeBtnGradient}
-                    >
-                      <Text style={styles.analyzeBtnText}>
-                        {netProfit > 0 ? "View Full Analysis" : "Analyze Product"}
-                      </Text>
-                      <TrendingUp size={16} color="#FFFFFF" strokeWidth={2.2} />
-                    </LinearGradient>
-                  </Pressable>
                 </View>
+
+                {/* ═══════ ROW 3: COST INPUT ═══════ */}
+                <View style={styles.costRow}>
+                  <Text style={styles.costInputLabel}>Your cost</Text>
+                  <View style={[styles.costInputBox, costFocused && styles.costInputFocused]}>
+                    <CircleDollarSign size={15} color={costFocused ? "#4A7A28" : "#BBBBBB"} strokeWidth={2} />
+                    <TextInput
+                      ref={costInputRef}
+                      style={styles.costInput}
+                      value={buyCost}
+                      onChangeText={setBuyCost}
+                      onFocus={() => setCostFocused(true)}
+                      onBlur={() => setCostFocused(false)}
+                      placeholder="0.00"
+                      placeholderTextColor="#CCCCCC"
+                      keyboardType="numeric"
+                      returnKeyType="done"
+                      selectTextOnFocus
+                    />
+                    <Text style={styles.costEditHint}>tap to edit</Text>
+                  </View>
+                </View>
+
+                {/* ═══════ ROW 4: CTA ═══════ */}
+                <Pressable
+                  style={({ pressed }) => [styles.ctaBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]}
+                  onPress={handleAnalyze}
+                >
+                  <LinearGradient
+                    colors={netProfit > 0 ? ["#2D4A1E", "#1C2A0E"] : ["#374151", "#1F2937"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.ctaBtnGradient}
+                  >
+                    <Text style={styles.ctaBtnText}>
+                      {netProfit > 0 ? "Unlock Full Breakdown" : "Analyze Product"}
+                    </Text>
+                    <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
+                  </LinearGradient>
+                </Pressable>
+
+                <Text style={styles.ctaSubtext}>
+                  {netProfit > 0
+                    ? `Material cost, ${RETAIL_SOURCES_COUNT}+ suppliers & alternatives inside`
+                    : "Compare prices across 50+ sources instantly"
+                  }
+                </Text>
               </View>
             </Animated.View>
           </GestureDetector>
@@ -796,102 +805,97 @@ const styles = StyleSheet.create({
     width: 36, height: 4, borderRadius: 2,
     backgroundColor: "rgba(0,0,0,0.12)",
   },
-  cardScrollContent: { paddingHorizontal: 20, gap: 14, paddingBottom: 4 },
+  cardScrollContent: { paddingHorizontal: 20, gap: 12, paddingBottom: 4 },
 
-  // ─── Zone 1: Risk Shield ───
-  zone1: { flexDirection: "row", alignItems: "center", gap: 8 },
-  eligibilityBadge: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8,
-  },
-  eligibilityGated: { backgroundColor: "#DC2626" },
-  eligibilityUngated: { backgroundColor: "#16A34A" },
-  eligibilityText: { ...TypeScale.captionSm, color: "#FFFFFF", fontWeight: "700", letterSpacing: 0.2 },
-  ipAlertBanner: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    backgroundColor: "#FEF3C7", paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 8, borderWidth: 1, borderColor: "#FDE68A",
-  },
-  ipAlertText: { ...TypeScale.captionSm, color: "#92400E", fontWeight: "700" },
-  lowRiskBadge: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    backgroundColor: "#F0F6E8", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8,
-  },
-  lowRiskText: { ...TypeScale.captionSm, color: "#4A7A28", fontWeight: "600" },
-
-  // ─── Zone 2: Product Identity ───
-  zone2: { flexDirection: "row", gap: 12 },
-  zone2Thumb: {
-    width: 72, height: 72, borderRadius: 14, overflow: "hidden",
+  // ─── Card Row 1: Product + Verdict ───
+  cardTopRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10 },
+  cardProduct: { flexDirection: "row", flex: 1, gap: 10, minWidth: 0 },
+  cardThumb: {
+    width: 52, height: 52, borderRadius: 12, overflow: "hidden",
     backgroundColor: "#F0F0F3", borderWidth: StyleSheet.hairlineWidth, borderColor: CARD_BORDER,
   },
-  zone2Image: { width: "100%", height: "100%" },
-  zone2Info: { flex: 1, justifyContent: "center", gap: 3 },
-  zone2Category: {
-    ...TypeScale.captionXs, color: "#888888", fontWeight: "600",
-    textTransform: "uppercase", letterSpacing: 0.8,
+  cardThumbImage: { width: "100%", height: "100%" },
+  cardProductInfo: { flex: 1, justifyContent: "center", gap: 2, minWidth: 0 },
+  cardProductCategory: {
+    ...TypeScale.captionXs, color: "#AAAAAA", fontWeight: "600",
+    textTransform: "uppercase", letterSpacing: 0.6,
   },
-  zone2Title: {
-    fontFamily: "Inter_700Bold", fontSize: 15, fontWeight: "700",
-    lineHeight: 20, letterSpacing: -0.3, color: "#1A1A1A",
+  cardProductName: {
+    fontFamily: "Inter_700Bold", fontSize: 14, fontWeight: "700",
+    lineHeight: 18, letterSpacing: -0.3, color: "#1A1A1A",
   },
-  velocityRow: { flexDirection: "row", marginTop: 2 },
-  velocityPill: {
+  cardTopActions: { alignItems: "flex-end", gap: 6 },
+  verdictPill: {
     flexDirection: "row", alignItems: "center", gap: 4,
-    backgroundColor: "#1C2A0E", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6,
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8,
   },
-  velocityText: { ...TypeScale.captionXs, color: "#FFFFFF", fontWeight: "700" },
-  velocityDivider: { width: 1, height: 10, backgroundColor: "rgba(255,255,255,0.25)", marginHorizontal: 2 },
-  velocityPercent: { ...TypeScale.captionXs, color: "#4AE88C", fontWeight: "700" },
+  verdictEmoji: { fontSize: 11 },
+  verdictLabel: { ...TypeScale.captionXs, fontWeight: "700", letterSpacing: 0.2 },
+  saveBtn: {
+    width: 32, height: 32, borderRadius: 16,
+    alignItems: "center", justifyContent: "center",
+    backgroundColor: "#F5F5F5",
+  },
 
-  // ─── Zone 3: Profit Engine ───
-  zone3: { gap: 12 },
-  profitRow: {
+  // ─── Card Row 2: Money Shot ───
+  moneyShot: {
     flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between",
+    paddingVertical: 8,
   },
-  profitMain: { gap: 1 },
-  profitLabel: { ...TypeScale.captionXs, color: "#888888", fontWeight: "500", textTransform: "uppercase", letterSpacing: 0.5 },
-  profitValue: {
-    fontFamily: "Inter_800ExtraBold", fontSize: 32, fontWeight: "800",
-    lineHeight: 36, letterSpacing: -1.2,
+  moneyLeft: { gap: 2 },
+  moneyLabel: { ...TypeScale.captionXs, color: "#AAAAAA", fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8 },
+  moneyValue: {
+    fontFamily: "Inter_800ExtraBold", fontSize: 36, fontWeight: "800",
+    lineHeight: 40, letterSpacing: -1.4,
   },
-  roiBlock: { alignItems: "flex-end", gap: 1 },
-  roiLabel: { ...TypeScale.captionXs, color: "#888888", fontWeight: "500", textTransform: "uppercase", letterSpacing: 0.5 },
-  roiValue: {
-    fontFamily: "Inter_700Bold", fontSize: 22, fontWeight: "700",
-    lineHeight: 26, letterSpacing: -0.5,
+  moneyRight: { alignItems: "flex-end", gap: 6 },
+  roiBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  roiBadgeText: { ...TypeScale.captionSm, fontWeight: "700", letterSpacing: 0.1 },
+  velocityPill: {
+    flexDirection: "row", alignItems: "center", gap: 3,
+    backgroundColor: "#1C2A0E", paddingHorizontal: 7, paddingVertical: 3, borderRadius: 5,
   },
+  velocityText: { ...TypeScale.captionXs, color: "#FFFFFF", fontWeight: "700", fontSize: 10 },
+  velocityDivider: { width: 1, height: 8, backgroundColor: "rgba(255,255,255,0.25)", marginHorizontal: 1 },
+  velocityPercent: { ...TypeScale.captionXs, color: "#4AE88C", fontWeight: "700", fontSize: 10 },
 
-  costInputWrap: { gap: 5 },
-  costInputLabel: { ...TypeScale.captionXs, color: "#888888", fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5 },
+  // ─── Card Row 3: Cost Input ───
+  costRow: { gap: 4 },
+  costInputLabel: { ...TypeScale.captionXs, color: "#AAAAAA", fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5 },
   costInputBox: {
     flexDirection: "row", alignItems: "center", gap: 8,
-    height: 48, borderRadius: 14,
-    borderWidth: 1.5, borderColor: "#E0E0E0",
+    height: 44, borderRadius: 12,
+    borderWidth: 1.5, borderColor: "#E8E8E8",
     backgroundColor: "#FAFAFA",
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
   },
   costInputFocused: {
     borderColor: "#4A7A28",
     backgroundColor: "#FFFFFF",
     shadowColor: "#4A7A28", shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.1, shadowRadius: 8, elevation: 2,
+    shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
   },
   costInput: {
-    flex: 1, ...TypeScale.bodyLg, fontWeight: "700",
-    color: "#1A1A1A", padding: 0, fontSize: 18,
+    flex: 1, ...TypeScale.bodyMd, fontWeight: "700",
+    color: "#1A1A1A", padding: 0, fontSize: 16,
   },
+  costEditHint: { ...TypeScale.captionXs, color: "#CCCCCC", fontWeight: "400" },
 
-  analyzeBtn: {
-    height: 52, borderRadius: 16, overflow: "hidden",
+  // ─── Card Row 4: CTA ───
+  ctaBtn: {
+    height: 48, borderRadius: 14, overflow: "hidden",
     shadowColor: "#1C2A0E", shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2, shadowRadius: 12, elevation: 6,
   },
-  analyzeBtnGradient: {
+  ctaBtnGradient: {
     flex: 1, flexDirection: "row", alignItems: "center",
-    justifyContent: "center", gap: 8,
+    justifyContent: "center", gap: 6,
   },
-  analyzeBtnText: { ...TypeScale.bodyLg, color: "#FFFFFF", fontWeight: "700", letterSpacing: 0.2 },
+  ctaBtnText: { ...TypeScale.bodyMd, color: "#FFFFFF", fontWeight: "700", letterSpacing: 0.2 },
+  ctaSubtext: {
+    ...TypeScale.captionXs, color: "#BBBBBB", fontWeight: "400",
+    textAlign: "center", letterSpacing: 0.1, paddingBottom: 2,
+  },
 
   // ─── Permission Screen ───
   permissionContainer: { flex: 1, backgroundColor: "#FFFFFF" },
