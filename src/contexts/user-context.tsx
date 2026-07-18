@@ -1,10 +1,13 @@
 import { createContext, useCallback, useContext, useState } from "react";
 
+export type PlanTier = "free" | "pro" | "enterprise";
+
 interface UserProfile {
   name: string;
   email: string;
   phone: string;
   avatarUri: string | null;
+  plan: PlanTier;
 }
 
 interface UserContextValue extends UserProfile {
@@ -19,6 +22,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     email: "alex@email.com",
     phone: "+1 (555) 123-4567",
     avatarUri: null,
+    plan: "pro",
   });
 
   const updateProfile = useCallback((data: Partial<UserProfile>) => {
@@ -40,6 +44,7 @@ export function useUserProfile() {
       email: "alex@email.com",
       phone: "+1 (555) 123-4567",
       avatarUri: null,
+      plan: "free" as PlanTier,
       updateProfile: () => {},
     };
   }

@@ -24,6 +24,7 @@ import {
 import { MAX_WIDTH, BOTTOM_NAV_HEIGHT } from "@/constants/layout";
 import { useScrollContext } from "@/contexts/scroll-context";
 import { useUserProfile } from "@/contexts/user-context";
+import type { PlanTier } from "@/contexts/user-context";
 import { useSaved } from "@/contexts/saved-context";
 import { useAppColors } from "@/hooks/use-app-colors";
 import { TypeScale } from "@/constants/typography";
@@ -45,11 +46,6 @@ const ACCOUNT_ROWS: MenuRow[] = [
   { id: "scan-history", label: "Scan History", icon: Clock, iconColor: "#4A7A28", route: "/history" },
 ];
 
-const SUBSCRIPTION_ROWS: MenuRow[] = [
-  { id: "pro", label: "Fringe Pro", icon: Crown, iconColor: "#FF6B1A", badge: "Active", route: "/paywall" },
-  { id: "billing", label: "Manage Billing", icon: CreditCard, iconColor: "#888888", route: "/billing" },
-];
-
 const SUPPORT_ROWS: MenuRow[] = [
   { id: "help", label: "Help Center", icon: Info, iconColor: "#888888" },
   { id: "rate", label: "Rate Fringe", icon: Star, iconColor: "#FF6B1A" },
@@ -59,7 +55,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { colors } = useAppColors();
-  const { name, email, avatarUri } = useUserProfile();
+  const { name, email, avatarUri, plan } = useUserProfile();
   const { savedIds } = useSaved();
   const initials = name
     .split(" ")
@@ -84,6 +80,18 @@ export default function ProfileScreen() {
   );
 
   const bottomSpacer = BOTTOM_NAV_HEIGHT + insets.bottom + 20;
+
+  const planBadge: Record<PlanTier, { label: string; color: string }> = {
+    free: { label: "Free Plan", color: colors.textSecondary },
+    pro: { label: "PRO Member", color: colors.accentDeep },
+    enterprise: { label: "Enterprise", color: colors.accent },
+  };
+  const badge = planBadge[plan];
+
+  const subscriptionRows: MenuRow[] = [
+    { id: "pro", label: plan === "free" ? "Upgrade to Pro" : "Fringe Pro", icon: Crown, iconColor: "#FF6B1A", badge: plan === "free" ? undefined : "Active", route: "/paywall" },
+    { id: "billing", label: "Manage Billing", icon: CreditCard, iconColor: "#888888", route: "/billing" },
+  ];
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -120,8 +128,8 @@ export default function ProfileScreen() {
           <Text style={[styles.profileName, { color: colors.text }]}>{name}</Text>
           <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{email}</Text>
 
-          <View style={[styles.proBadge, { backgroundColor: colors.accentDeep }]}>
-            <Text style={styles.proBadgeText}>PRO Member</Text>
+          <View style={[styles.proBadge, { backgroundColor: badge.color }]}>
+            <Text style={styles.proBadgeText}>{badge.label}</Text>
           </View>
 
           <View style={[styles.statsDivider, { backgroundColor: colors.border }]} />
@@ -145,7 +153,7 @@ export default function ProfileScreen() {
         <MenuSection title="ACCOUNT" rows={ACCOUNT_ROWS} lastRowHasBorder={false} colors={colors} />
 
         {/* Subscription */}
-        <MenuSection title="SUBSCRIPTION" rows={SUBSCRIPTION_ROWS} lastRowHasBorder={false} colors={colors} />
+        <MenuSection title="SUBSCRIPTION" rows={subscriptionRows} lastRowHasBorder={false} colors={colors} />
 
         {/* Support */}
         <MenuSection title="SUPPORT" rows={SUPPORT_ROWS} lastRowHasBorder={false} colors={colors} />
