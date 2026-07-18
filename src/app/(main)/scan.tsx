@@ -18,6 +18,7 @@ import { Image } from "expo-image";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  useAnimatedReaction,
   withTiming,
   withSpring,
   withRepeat,
@@ -35,17 +36,14 @@ import {
   ZapOff,
   ImageIcon,
   Lock,
-  Unlock,
   Layers,
   ScanLine,
   Sparkles,
-  ShieldAlert,
   ShieldCheck,
   TrendingUp,
   AlertTriangle,
   BadgeCheck,
   CircleDollarSign,
-  ChevronDown,
 } from "lucide-react-native";
 import { TypeScale } from "@/constants/typography";
 
@@ -63,8 +61,6 @@ interface DetectedProduct {
   retailPrice: number;
   materialCost: number;
 }
-
-const IP_RISK_BRANDS = ["Gucci", "Louis Vuitton", "Chanel", "Nike", "Hermès", "Prada"];
 
 const MOCK_PRODUCTS: DetectedProduct[] = [
   {
@@ -199,50 +195,55 @@ export default function ScanScreen() {
     return (netProfit / computedBuyCost) * 100;
   }, [netProfit, computedBuyCost]);
 
-  useEffect(() => {
-    if (scanState === "idle") {
-      scanLineActive.value = 1;
-      scanLineY.value = 0;
-      scanLineY.value = withRepeat(
-        withSequence(
-          withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.cubic) }),
-          withTiming(0, { duration: 0 }),
-        ),
-        -1,
-        false,
-      );
-      gridOpacity.value = withTiming(0.08, { duration: 400 });
-    } else {
-      scanLineActive.value = 0;
-      cancelAnimation(scanLineY);
-      gridOpacity.value = withTiming(0, { duration: 200 });
-    }
-    return () => { cancelAnimation(scanLineY); };
-  }, [scanState]);
+  const scanStateSv = useSharedValue<ScanState>("idle");
 
   useEffect(() => {
-    if (scanState === "detected") {
-      cardTranslateY.value = withSpring(0, { damping: 18, stiffness: 100, mass: 0.8 });
-      cardOpacity.value = withTiming(1, { duration: 350 });
-      cornerScale.value = withSpring(1.05, { damping: 10, stiffness: 180 });
-      pulseOpacity.value = withRepeat(
-        withSequence(withTiming(0.7, { duration: 700 }), withTiming(0.25, { duration: 700 })),
-        -1, false,
-      );
-    } else {
-      cardTranslateY.value = withTiming(100, { duration: 250 });
-      cardOpacity.value = withTiming(0, { duration: 200 });
-      cornerScale.value = withTiming(1, { duration: 250 });
-      cancelAnimation(pulseOpacity);
-      pulseOpacity.value = 0.3;
-    }
-    return () => {
-      cancelAnimation(cardTranslateY);
-      cancelAnimation(cardOpacity);
-      cancelAnimation(cornerScale);
-      cancelAnimation(pulseOpacity);
-    };
-  }, [scanState]);
+    scanStateSv.value = scanState;
+  }, [scanState, scanStateSv]);
+
+  useAnimatedReaction(
+    () => scanStateSv.value,
+    (state) => {
+      if (state === "idle") {
+        scanLineActive.value = 1;
+        scanLineY.value = 0;
+        scanLineY.value = withRepeat(
+          withSequence(
+            withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.cubic) }),
+            withTiming(0, { duration: 0 }),
+          ),
+          -1,
+          false,
+        );
+        gridOpacity.value = withTiming(0.08, { duration: 400 });
+      } else {
+        scanLineActive.value = 0;
+        cancelAnimation(scanLineY);
+        gridOpacity.value = withTiming(0, { duration: 200 });
+      }
+    },
+  );
+
+  useAnimatedReaction(
+    () => scanStateSv.value,
+    (state) => {
+      if (state === "detected") {
+        cardTranslateY.value = withSpring(0, { damping: 18, stiffness: 100, mass: 0.8 });
+        cardOpacity.value = withTiming(1, { duration: 350 });
+        cornerScale.value = withSpring(1.05, { damping: 10, stiffness: 180 });
+        pulseOpacity.value = withRepeat(
+          withSequence(withTiming(0.7, { duration: 700 }), withTiming(0.25, { duration: 700 })),
+          -1, false,
+        );
+      } else {
+        cardTranslateY.value = withTiming(100, { duration: 250 });
+        cardOpacity.value = withTiming(0, { duration: 200 });
+        cornerScale.value = withTiming(1, { duration: 250 });
+        cancelAnimation(pulseOpacity);
+        pulseOpacity.value = 0.3;
+      }
+    },
+  );
 
   const scanLineStyle = useAnimatedStyle(() => ({
     top: `${interpolate(scanLineY.value, [0, 1], [6, 94])}%`,
